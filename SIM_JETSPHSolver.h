@@ -16,6 +16,9 @@ private:
 
 	DECLARE_STANDARD_GETCASTTOTYPE();
 	DECLARE_DATAFACTORY(SIM_JETSPHSolver, SIM_SingleSolver, "JET SPH Solver Description", GetDescription());
+
+public:
+	void test();
 };
 
 #endif //HINAPE_JET_SIM_JETSPHSOLVER_H

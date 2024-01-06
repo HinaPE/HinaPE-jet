@@ -22,6 +22,10 @@ add_library(
         SIM_JETSPHSolver.cpp
         SIM_JETSPHSolver.h
         hdk_interface/universal_array_data.h
+        SIM_JETSubSolverTest.cpp
+        SIM_JETSubSolverTest.h
+        GAS_JETSphereClosestDistance.cpp
+        GAS_JETSphereClosestDistance.h
 )
 
 # Link Houdini Toolkit
@@ -50,3 +54,29 @@ target_compile_options(
         -D_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION
 )
 houdini_configure_target(${TARGET})
+
+# Build Test
+set(TEST_TARGET mytest)
+add_executable(
+        ${TEST_TARGET}
+        test/main.cpp
+)
+target_link_libraries(
+        ${TEST_TARGET}
+        PUBLIC
+        Houdini
+        jet
+)
+target_link_directories(
+        ${TEST_TARGET}
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        install/lib
+)
+target_include_directories(
+        ${TEST_TARGET}
+        PUBLIC
+        ${CMAKE_CURRENT_BINARY_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        install/include
+)
