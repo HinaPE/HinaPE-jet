@@ -17,6 +17,9 @@
 
 #include "jet/jet.h"
 
+static PRM_Name showGuideGeometry("show_guide_geometry", "Show Guide Geometry");
+static PRM_Default showGuideGeometryDefault(false);
+
 bool GAS_JETVolumeEmitter::solveGasSubclass(SIM_Engine &engine, SIM_Object *obj, SIM_Time time, SIM_Time timestep)
 {
 	SIM_GeometryCopy *geometry = getOrCreateGeometry(obj, GAS_NAME_GEOMETRY);
@@ -26,19 +29,55 @@ bool GAS_JETVolumeEmitter::solveGasSubclass(SIM_Engine &engine, SIM_Object *obj,
 
 const SIM_DopDescription *GAS_JETVolumeEmitter::getDopDescription()
 {
-	static PRM_Name showGuideGeometry("show_guide_geometry", "Show Guide Geometry");
-	static PRM_Default showGuideGeometryDefault(false);
-
 	static PRM_Name theGeometryName(GAS_NAME_GEOMETRY, "Geometry");
 	static PRM_Default theGeometryNameDefault(0, "Geometry");
 
 	static PRM_Name sopPathName("soppath", "SOP Path");
 
-	static std::array<PRM_Template, 4> PRMS{
+	static PRM_Name targetSpacing("target_spacing", "Target Spacing");
+	static PRM_Default targetSpacingDefault(0.02);
+
+	static PRM_Name initialVelocity("initial_velocity", "Initial Velocity");
+	static std::array<PRM_Default, 3> initialVelocityDefault = {0, 0, 0};
+
+	static PRM_Name linearVelocity("linear_velocity", "Linear Velocity");
+	static std::array<PRM_Default, 3> linearVelocityDefault = {0, 0, 0};
+
+	static PRM_Name angularVelocity("angular_velocity", "Angular Velocity");
+	static std::array<PRM_Default, 3> angularVelocityDefault = {0, 0, 0};
+
+	static PRM_Name maxNumberOfParticles("max_number_of_particles", "Max Number Of Particles");
+	static PRM_Default maxNumberOfParticlesDefault(10e7);
+
+	static PRM_Name jitter("jitter", "Jitter");
+	static PRM_Default jitterDefault(0);
+
+	static PRM_Name isOneShot("is_one_shot", "Is One Shot");
+	static PRM_Default isOneShotDefault(true);
+
+	static PRM_Name allowOverlapping("allow_overlapping", "Allow Overlapping");
+	static PRM_Default allowOverlappingDefault(false);
+
+	static PRM_Name randomSeed("random_seed", "RandomSeed");
+	static PRM_Default randomSeedDefault(0);
+
+	static std::array<PRM_Template, 11> PRMS{
 			PRM_Template(PRM_STRING, 1, &theGeometryName, &theGeometryNameDefault),
-			PRM_Template(PRM_TOGGLE, 1, &showGuideGeometry, &showGuideGeometryDefault),
 			PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &sopPathName,
 						 0, 0, 0, 0, &PRM_SpareData::sopPath),
+			PRM_Template(PRM_FLT, 1, &targetSpacing, &targetSpacingDefault),
+			PRM_Template(PRM_FLT, 3, &initialVelocity, initialVelocityDefault.data()),
+			PRM_Template(PRM_FLT, 3, &linearVelocity, linearVelocityDefault.data()),
+			PRM_Template(PRM_FLT, 3, &angularVelocity, angularVelocityDefault.data()),
+			PRM_Template(PRM_FLT, 1, &maxNumberOfParticles, &maxNumberOfParticlesDefault),
+			PRM_Template(PRM_TOGGLE, 1, &isOneShot, &isOneShotDefault),
+			PRM_Template(PRM_TOGGLE, 1, &allowOverlapping, &allowOverlappingDefault),
+			PRM_Template(PRM_FLT, 1, &randomSeed, &randomSeedDefault),
+			PRM_Template()
+	};
+
+	static std::array<PRM_Template, 2> PRMS_GUIDE{
+			PRM_Template(PRM_TOGGLE, 1, &showGuideGeometry, &showGuideGeometryDefault),
 			PRM_Template()
 	};
 
@@ -48,6 +87,8 @@ const SIM_DopDescription *GAS_JETVolumeEmitter::getDopDescription()
 								   "JETVolumeEmitter",
 								   classname(),
 								   PRMS.data());
+	DESC.setGuideTemplates(PRMS_GUIDE.data());
+	DESC.setDefaultUniqueDataName(true);
 	setGasDescription(DESC);
 	return &DESC;
 }
@@ -59,7 +100,7 @@ SIM_Guide *GAS_JETVolumeEmitter::createGuideObjectSubclass() const
 
 void GAS_JETVolumeEmitter::buildGuideGeometrySubclass(const SIM_RootData &root, const SIM_Options &options, const GU_DetailHandle &gdh, UT_DMatrix4 *xform, const SIM_Time &t) const
 {
-	if (!getShowGuideGeometry())
+	if (!options.hasOption(showGuideGeometry.getToken()) || !options.getOptionB(showGuideGeometry.getToken()))
 		return;
 
 	const UT_StringHolder &SOPPath = getSOPPath();

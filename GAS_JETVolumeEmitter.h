@@ -6,8 +6,17 @@
 
 class GAS_JETVolumeEmitter : public GAS_SubSolver
 {
+public:
 	GETSET_DATA_FUNCS_S("soppath", SOPPath)
-	GETSET_DATA_FUNCS_B("show_guide_geometry", ShowGuideGeometry);
+	GETSET_DATA_FUNCS_F("target_spacing", TargetSpacing)
+	GETSET_DATA_FUNCS_V3("initial_velocity", InitialVelocity)
+	GETSET_DATA_FUNCS_V3("linear_velocity", LinearVelocity)
+	GETSET_DATA_FUNCS_V3("angular_velocity", AngularVelocity)
+	GETSET_DATA_FUNCS_F("max_number_of_particles", MaxNumberOfParticles)
+	GETSET_DATA_FUNCS_F("jitter", Jitter)
+	GETSET_DATA_FUNCS_B("is_one_shot", IsOneShot)
+	GETSET_DATA_FUNCS_B("allow_overlapping", AllowOverlapping)
+	GETSET_DATA_FUNCS_F("random_seed", RandomSeed)
 
 protected:
 	GAS_JETVolumeEmitter(const SIM_DataFactory *factory) : BaseClass(factory) {}

@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.26)
 project(HinaPE-jet)
 
 set(CMAKE_CXX_STANDARD 17)
-set(TARGET SIM_PBFSolver)
+set(TARGET SIM_JETFluid)
 
 # Find Houdini
 if (MSVC)
@@ -19,8 +19,6 @@ add_library(
         ${TARGET}
         SHARED
         Entrance.cpp
-        SIM_JETSubSolverTest.cpp
-        SIM_JETSubSolverTest.h
 
         GAS_JETVolumeEmitter.cpp
         GAS_JETVolumeEmitter.h
