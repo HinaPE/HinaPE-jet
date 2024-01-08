@@ -15,14 +15,15 @@
 
 #include <SOP/SOP_Node.h>
 
+#include "SIM_JETParticleData.h"
 #include "jet/jet.h"
 
-static PRM_Name showGuideGeometry("show_guide_geometry", "Show Guide Geometry");
-static PRM_Default showGuideGeometryDefault(false);
+PRM_Name GAS_JETVolumeEmitter::showGuideGeometry("show_guide_geometry", "Show Guide Geometry");
 
 bool GAS_JETVolumeEmitter::solveGasSubclass(SIM_Engine &engine, SIM_Object *obj, SIM_Time time, SIM_Time timestep)
 {
 	SIM_GeometryCopy *geometry = getOrCreateGeometry(obj, GAS_NAME_GEOMETRY);
+	SIM_JETParticleData *ParticleData = FetchJetParticleData(obj);
 
 	return true;
 }
@@ -77,7 +78,7 @@ const SIM_DopDescription *GAS_JETVolumeEmitter::getDopDescription()
 	};
 
 	static std::array<PRM_Template, 2> PRMS_GUIDE{
-			PRM_Template(PRM_TOGGLE, 1, &showGuideGeometry, &showGuideGeometryDefault),
+			PRM_Template(PRM_TOGGLE, 1, &showGuideGeometry, PRMzeroDefaults),
 			PRM_Template()
 	};
 
@@ -107,7 +108,7 @@ void GAS_JETVolumeEmitter::buildGuideGeometrySubclass(const SIM_RootData &root, 
 	SOP_Node *sop = getSOPNode(SOPPath, true);
 	OP_Context context(t);
 	GU_DetailHandle gdh_emitter = sop->getCookedGeoHandle(context);
-	const GU_Detail* gdp_emitter = sop->getCookedGeo(context);
+	const GU_Detail *gdp_emitter = sop->getCookedGeo(context);
 
 	if (!gdh.isNull())
 	{
@@ -116,4 +117,9 @@ void GAS_JETVolumeEmitter::buildGuideGeometrySubclass(const SIM_RootData &root, 
 		gdp->clear();
 		gdp->duplicate(*gdp_emitter);
 	}
+}
+
+SIM_JETParticleData *GAS_JETVolumeEmitter::FetchJetParticleData(SIM_Object *obj)
+{
+	return SIM_DATA_GET(*obj, JETParticleData_Name, SIM_JETParticleData);
 }

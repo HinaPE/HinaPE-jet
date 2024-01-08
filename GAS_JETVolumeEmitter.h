@@ -2,7 +2,8 @@
 #define HINAPE_JET_GAS_JETVOLUMEEMITTER_H
 
 #include <GAS/GAS_SubSolver.h>
-#include <GAS/GAS_PBDSolve.h>
+
+class SIM_JETParticleData;
 
 class GAS_JETVolumeEmitter : public GAS_SubSolver
 {
@@ -26,12 +27,16 @@ protected:
 
 	SIM_Guide *createGuideObjectSubclass() const override;
 	void buildGuideGeometrySubclass(const SIM_RootData &root, const SIM_Options &options, const GU_DetailHandle &gdh, UT_DMatrix4 *xform, const SIM_Time &t) const override;
+	static PRM_Name showGuideGeometry;
 
 DECLARE_STANDARD_GETCASTTOTYPE();
 DECLARE_DATAFACTORY(GAS_JETVolumeEmitter,
 					GAS_SubSolver,
 					"JET Volume Emitter SubSolver",
 					getDopDescription());
+
+public:
+	SIM_JETParticleData* FetchJetParticleData(SIM_Object *obj);
 };
 
 #endif //HINAPE_JET_GAS_JETVOLUMEEMITTER_H
