@@ -6,7 +6,9 @@
 #include <SIM/SIM_Object.h>
 #include <SIM/SIM_ObjectArray.h>
 #include <SIM/SIM_PositionSimple.h>
+
 #include "jet/jet.h"
+
 bool SIM_JETSubSolverTest::solveGasSubclass(SIM_Engine &engine, SIM_Object *obj, SIM_Time time, SIM_Time timestep)
 {
 	jet::Vector3D t(1,2,3);

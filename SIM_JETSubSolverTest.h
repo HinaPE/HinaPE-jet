@@ -20,9 +20,6 @@ DECLARE_DATAFACTORY(SIM_JETSubSolverTest,
 					GAS_SubSolver,
 					"JET TEST SubSolver",
 					getDopDescription());
-
-public:
-
 };
 
 #endif //HINAPE_JET_SIM_JETSUBSOLVERTEST_H

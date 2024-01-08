@@ -19,13 +19,11 @@ add_library(
         ${TARGET}
         SHARED
         Entrance.cpp
-        SIM_JETSPHSolver.cpp
-        SIM_JETSPHSolver.h
-        hdk_interface/universal_array_data.h
         SIM_JETSubSolverTest.cpp
         SIM_JETSubSolverTest.h
-        GAS_JETSphereClosestDistance.cpp
-        GAS_JETSphereClosestDistance.h
+
+        GAS_JETVolumeEmitter.cpp
+        GAS_JETVolumeEmitter.h
 )
 
 # Link Houdini Toolkit
