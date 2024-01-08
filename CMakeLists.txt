@@ -22,6 +22,8 @@ add_library(
 
         SIM_JETParticleData.cpp
         SIM_JETParticleData.h
+        SIM_JETCollider.cpp
+        SIM_JETCollider.h
 
         GAS_JETVolumeEmitter.cpp
         GAS_JETVolumeEmitter.h

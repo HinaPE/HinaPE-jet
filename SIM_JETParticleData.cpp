@@ -13,9 +13,20 @@
 #include <PRM/PRM_Default.h>
 #include <PRM/PRM_Utils.h>
 #include <PRM/PRM_SpareData.h>
+#include <PRM/PRM_ChoiceList.h>
 
 const SIM_DopDescription *SIM_JETParticleData::GetDescription()
 {
+	// TODO:
+	static PRM_Name DataType[] =
+			{
+					PRM_Name("sphdata", "SPHData"),
+					PRM_Name("pcisphdata", "PciSPHData"),
+					PRM_Name(0)
+			};
+	static PRM_ChoiceList particleDataType((PRM_ChoiceListType) (PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE),
+										   DataType);
+
 	static PRM_Name targetDensity("target_density", "Target Density");
 	static PRM_Default targetDensityDefault(1000.f);
 
@@ -25,7 +36,7 @@ const SIM_DopDescription *SIM_JETParticleData::GetDescription()
 	static PRM_Name relativeKernelRadius("relative_kernel_radius", "Relative Kernel Radius");
 	static PRM_Default relativeKernelRadiusDefault(1.8f);
 
-	static std::array<PRM_Template, 4> PRMS{
+	static std::array<PRM_Template, 5> PRMS{
 			PRM_Template(PRM_FLT, 1, &targetDensity, &targetDensityDefault),
 			PRM_Template(PRM_FLT, 1, &targetSpacing, &targetSpacingDefault),
 			PRM_Template(PRM_FLT, 1, &relativeKernelRadius, &relativeKernelRadiusDefault),
@@ -40,6 +51,7 @@ const SIM_DopDescription *SIM_JETParticleData::GetDescription()
 								   PRMS.data());
 	return &DESC;
 }
+
 void SIM_JETParticleData::initializeSubclass()
 {
 	BaseClass::initializeSubclass();
@@ -49,17 +61,18 @@ void SIM_JETParticleData::initializeSubclass()
 	float relative_kernel_radius = getRelativeKernelRadius();
 
 	// TODO: initialize ParticleData here
-	this->InnerDataPtr.reset();
 	auto data = std::make_shared<jet::SphSystemData3>();
 	data->setTargetDensity(target_density);
 	data->setTargetSpacing(target_spacing);
 	data->setRelativeKernelRadius(relative_kernel_radius);
+	this->InnerDataPtr.reset();
 	this->InnerDataPtr = data;
 }
+
 void SIM_JETParticleData::makeEqualSubclass(const SIM_Data *source)
 {
 	SIM_Data::makeEqualSubclass(source);
 
-	const SIM_JETParticleData* src = SIM_DATA_CASTCONST(source, SIM_JETParticleData);
+	const SIM_JETParticleData *src = SIM_DATA_CASTCONST(source, SIM_JETParticleData);
 	this->InnerDataPtr = src->InnerDataPtr;
 }

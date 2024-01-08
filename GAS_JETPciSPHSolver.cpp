@@ -19,15 +19,17 @@
 
 PRM_Name GAS_JETPciSPHSolver::showGuideGeometry("show_guide_geometry", "Show Guide Geometry");
 
-GAS_JETPciSPHSolver::GAS_JETPciSPHSolver(const SIM_DataFactory *factory) : BaseClass(factory), jet::PciSphSolver3(1000.f, 0.02f, 1.8f) {}
-
 bool GAS_JETPciSPHSolver::solveGasSubclass(SIM_Engine &engine, SIM_Object *obj, SIM_Time time, SIM_Time timestep)
 {
-	LoadParticleData(obj);
+	// Set Particle Data
+	SIM_JETParticleData *ParticleData = SIM_DATA_GET(*obj, JETParticleData_Name, SIM_JETParticleData);
+	setParticleSystemData(ParticleData->InnerDataPtr);
 
-//	SIM_GeometryCopy *geometry = getOrCreateGeometry(obj, GAS_NAME_GEOMETRY);
+	// Set Emitter
 
-	SaveParticleData(obj);
+	// Set Colliders
+
+	SIM_GeometryCopy *geometry = getOrCreateGeometry(obj, GAS_NAME_GEOMETRY);
 
 	return true;
 }
@@ -71,6 +73,16 @@ const SIM_DopDescription *GAS_JETPciSPHSolver::getDopDescription()
 	return &DESC;
 }
 
+void GAS_JETPciSPHSolver::initializeSubclass()
+{
+	SIM_Data::initializeSubclass();
+}
+
+void GAS_JETPciSPHSolver::makeEqualSubclass(const SIM_Data *source)
+{
+	SIM_Data::makeEqualSubclass(source);
+}
+
 SIM_Guide *GAS_JETPciSPHSolver::createGuideObjectSubclass() const
 {
 	return new SIM_GuideShared(this, true);
@@ -94,19 +106,4 @@ void GAS_JETPciSPHSolver::buildGuideGeometrySubclass(const SIM_RootData &root, c
 //		gdp->clear();
 //		gdp->duplicate(*gdp_emitter);
 //	}
-}
-
-void GAS_JETPciSPHSolver::LoadParticleData(SIM_Object *obj)
-{
-	SIM_JETParticleData *ParticleData = SIM_DATA_GET(*obj, JETParticleData_Name, SIM_JETParticleData);
-	setParticleSystemData(ParticleData->InnerDataPtr);
-
-	// TODO: sync geometry
-}
-void GAS_JETPciSPHSolver::SaveParticleData(SIM_Object *obj)
-{
-	SIM_JETParticleData *ParticleData = SIM_DATA_GET(*obj, JETParticleData_Name, SIM_JETParticleData);
-	const jet::ParticleSystemData3Ptr &data = particleSystemData();
-
-	// TODO: sync geometry
 }

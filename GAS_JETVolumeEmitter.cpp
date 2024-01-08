@@ -106,6 +106,12 @@ void GAS_JETVolumeEmitter::buildGuideGeometrySubclass(const SIM_RootData &root, 
 
 	const UT_StringHolder &SOPPath = getSOPPath();
 	SOP_Node *sop = getSOPNode(SOPPath, true);
+
+	if (!sop)
+	{
+		return;
+	}
+
 	OP_Context context(t);
 	GU_DetailHandle gdh_emitter = sop->getCookedGeoHandle(context);
 	const GU_Detail *gdp_emitter = sop->getCookedGeo(context);
