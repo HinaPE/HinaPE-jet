@@ -2,7 +2,11 @@
 #define HINAPE_JET_SIM_JETCOLLIDER_H
 
 #include <SIM/SIM_ColliderPoint.h>
+#include <SIM/SIM_ColliderInfo.h>
+#include <SIM/SIM_ColliderBFA.h>
 
+
+// TODO: implement JET Collision Here
 class SIM_JETCollider : public SIM_Collider
 {
 protected:

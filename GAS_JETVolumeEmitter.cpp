@@ -25,6 +25,14 @@ bool GAS_JETVolumeEmitter::solveGasSubclass(SIM_Engine &engine, SIM_Object *obj,
 	SIM_GeometryCopy *geometry = getOrCreateGeometry(obj, GAS_NAME_GEOMETRY);
 	SIM_JETParticleData *ParticleData = FetchJetParticleData(obj);
 
+	{
+		// Sync Simulation Result
+		SIM_GeometryAutoWriteLock lock(geometry);
+		GU_Detail &gdp = lock.getGdp();
+
+//		gdp.getOffset
+	}
+
 	return true;
 }
 
