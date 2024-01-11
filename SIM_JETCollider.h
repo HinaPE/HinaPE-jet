@@ -4,6 +4,7 @@
 #include <SIM/SIM_ColliderPoint.h>
 #include <SIM/SIM_ColliderInfo.h>
 #include <SIM/SIM_ColliderBFA.h>
+#include <SIM/SIM_SDFCollision.h>
 
 
 // TODO: implement JET Collision Here

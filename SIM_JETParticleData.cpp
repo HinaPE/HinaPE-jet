@@ -17,15 +17,15 @@
 
 const SIM_DopDescription *SIM_JETParticleData::GetDescription()
 {
-	// TODO:
 	static PRM_Name DataType[] =
 			{
-					PRM_Name("sphdata", "SPHData"),
-					PRM_Name("pcisphdata", "PciSPHData"),
+					PRM_Name("0", "SPHData"),
+					PRM_Name("1", "PciSPHData"),
 					PRM_Name(0)
 			};
-	static PRM_ChoiceList particleDataType((PRM_ChoiceListType) (PRM_CHOICELIST_EXCLUSIVE | PRM_CHOICELIST_REPLACE),
-										   DataType);
+
+	static PRM_ChoiceList particleDataType((PRM_ChoiceListType) (PRM_CHOICELIST_SINGLE), &(DataType[0]));
+	static PRM_Name particleDataTypeName("particleDataType", "Particle Data Type");
 
 	static PRM_Name targetDensity("target_density", "Target Density");
 	static PRM_Default targetDensityDefault(1000.f);
@@ -37,6 +37,7 @@ const SIM_DopDescription *SIM_JETParticleData::GetDescription()
 	static PRM_Default relativeKernelRadiusDefault(1.8f);
 
 	static std::array<PRM_Template, 5> PRMS{
+			PRM_Template(PRM_INT, 1, &particleDataTypeName, 0, &particleDataType),
 			PRM_Template(PRM_FLT, 1, &targetDensity, &targetDensityDefault),
 			PRM_Template(PRM_FLT, 1, &targetSpacing, &targetSpacingDefault),
 			PRM_Template(PRM_FLT, 1, &relativeKernelRadius, &relativeKernelRadiusDefault),
@@ -71,7 +72,7 @@ void SIM_JETParticleData::initializeSubclass()
 
 void SIM_JETParticleData::makeEqualSubclass(const SIM_Data *source)
 {
-	SIM_Data::makeEqualSubclass(source);
+	BaseClass::makeEqualSubclass(source);
 
 	const SIM_JETParticleData *src = SIM_DATA_CASTCONST(source, SIM_JETParticleData);
 	this->InnerDataPtr = src->InnerDataPtr;

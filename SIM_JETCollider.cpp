@@ -15,8 +15,11 @@
 #include <PRM/PRM_SpareData.h>
 #include <PRM/PRM_ChoiceList.h>
 
+#include <iostream>
+
 bool SIM_JETCollider::collideObjectsSubclass(SIM_Engine &engine, SIM_Object &object, SIM_Object &affector, const SIM_Time &starttime, const SIM_Time &endtime, SIM_Collider::SIM_ImpactApplyType impactapplytype, int impactflags) const
 {
+	std::cout << "Collide" << std::endl;
 	return SIM_Collider::collideObjectsSubclass(engine, object, affector, starttime, endtime, impactapplytype, impactflags);
 }
 

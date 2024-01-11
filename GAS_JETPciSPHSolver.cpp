@@ -2,9 +2,11 @@
 
 #include <SIM/SIM_DopDescription.h>
 #include <SIM/SIM_Object.h>
+#include <SIM/SIM_ObjectArray.h>
 #include <SIM/SIM_Geometry.h>
 #include <SIM/SIM_GeometryCopy.h>
 #include <SIM/SIM_GuideShared.h>
+#include <SIM/SIM_ColliderLabel.h>
 
 #include <PRM/PRM_Name.h>
 #include <PRM/PRM_Template.h>
@@ -16,6 +18,7 @@
 #include <SOP/SOP_Node.h>
 
 #include <SIM_JETParticleData.h>
+#include <SIM_JETCollider.h>
 
 PRM_Name GAS_JETPciSPHSolver::showGuideGeometry("show_guide_geometry", "Show Guide Geometry");
 
@@ -29,7 +32,39 @@ bool GAS_JETPciSPHSolver::solveGasSubclass(SIM_Engine &engine, SIM_Object *obj, 
 
 	// Set Colliders
 
-	SIM_GeometryCopy *geometry = getOrCreateGeometry(obj, GAS_NAME_GEOMETRY);
+	SIM_GeometryCopy *geometry = getOrCreateGeometry(obj, GAS_NAME_GEOMETRY); // notice!
+
+	SIM_ObjectArray affectors;
+	obj->getAffectors(affectors, "SIM_RelationshipCollide");
+	exint num_affectors = affectors.entries();
+
+	for (exint i = 0; i < num_affectors; ++i)
+	{
+		SIM_Object *affector = affectors(i);
+		if (!affector->getName().equal(obj->getName()))
+		{
+			const SIM_Collider *collider = affector->getCollider(*affector); // Important: see document inside getCollider
+
+			if (collider)
+			{
+				std::cout << collider->getDataType() << std::endl;
+			}
+
+//			SIM_ColliderInfoArray colliderinfo;
+//			affector->getColliderInfo(colliderinfo);
+//
+//			const SIM_ColliderLabel	*colliderlabel = affector->getColliderLabel();
+//			colliderlabel->getColliderLabel();
+//
+//			for (SIM_ColliderInfo &ci: colliderinfo)
+//			{
+//				const SIM_Collider *collider = ci.getCollider(obj);
+//				std::cout << collider->getDataType() << std::endl;
+////				SIM_Object *affector = ci.getAffector(); // This is the same as the above affector
+//				collider->collideObjects(engine, *obj, *affector, time, time + timestep, SIM_Collider::SIM_ImpactApplyType::SIM_IMPACTAPPLY_ONEWAY, 0);
+//			}
+		}
+	}
 
 	return true;
 }
