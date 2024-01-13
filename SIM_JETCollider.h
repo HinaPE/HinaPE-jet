@@ -22,7 +22,7 @@ DECLARE_STANDARD_GETCASTTOTYPE();
 DECLARE_DATAFACTORY(SIM_JETCollider, SIM_Collider, "JET Collider", GetDescription());
 
 public:
-	jet::Surface3Ptr InnerSurface;
+	jet::Surface3Ptr InnerSurfacePtr;
 };
 
 #endif //HINAPE_JET_SIM_JETCOLLIDER_H

@@ -61,7 +61,6 @@ void SIM_JETParticleData::initializeSubclass()
 	float target_spacing = getTargetSpacing();
 	float relative_kernel_radius = getRelativeKernelRadius();
 
-	// TODO: initialize ParticleData here
 	auto data = std::make_shared<jet::SphSystemData3>();
 	data->setTargetDensity(target_density);
 	data->setTargetSpacing(target_spacing);

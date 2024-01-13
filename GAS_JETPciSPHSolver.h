@@ -49,6 +49,8 @@ public:
 	GETSET_DATA_FUNCS_F("target_density", TargetDensity)
 	GETSET_DATA_FUNCS_F("target_spacing", TargetSpacing)
 	GETSET_DATA_FUNCS_F("relative_kernel_radius", RelativeKernelRadius)
+	GETSET_DATA_FUNCS_V3("bounding_box_size", BoundingBoxSize);
+	GETSET_DATA_FUNCS_V3("bounding_box_center", BoundingBoxCenter);
 
 protected:
 	GAS_JETPciSPHSolver(const SIM_DataFactory *factory) : BaseClass(factory), jet::PciSphSolver3(1000.f, 0.02f, 1.8f) {}

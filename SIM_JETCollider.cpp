@@ -15,11 +15,8 @@
 #include <PRM/PRM_SpareData.h>
 #include <PRM/PRM_ChoiceList.h>
 
-#include <iostream>
-
 bool SIM_JETCollider::collideObjectsSubclass(SIM_Engine &engine, SIM_Object &object, SIM_Object &affector, const SIM_Time &starttime, const SIM_Time &endtime, SIM_Collider::SIM_ImpactApplyType impactapplytype, int impactflags) const
 {
-	std::cout << "Collide" << std::endl;
 	return SIM_Collider::collideObjectsSubclass(engine, object, affector, starttime, endtime, impactapplytype, impactflags);
 }
 
@@ -46,12 +43,15 @@ void SIM_JETCollider::initializeSubclass()
 {
 	SIM_Data::initializeSubclass();
 
-	InnerSurface = jet::TriangleMesh3::builder()
+	InnerSurfacePtr = jet::TriangleMesh3::builder()
 			.makeShared();
 }
 
 void SIM_JETCollider::makeEqualSubclass(const SIM_Data *source)
 {
 	SIM_Data::makeEqualSubclass(source);
+
+	const SIM_JETCollider *src = SIM_DATA_CASTCONST(source, SIM_JETCollider);
+	InnerSurfacePtr = src->InnerSurfacePtr;
 }
 

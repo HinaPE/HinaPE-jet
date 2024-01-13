@@ -45,11 +45,19 @@ const SIM_DopDescription *GAS_JETPciSPHSolver::getDopDescription()
 	static PRM_Name relativeKernelRadius("relative_kernel_radius", "Relative Kernel Radius");
 	static PRM_Default relativeKernelRadiusDefault(1.8f);
 
-	static std::array<PRM_Template, 5> PRMS{
+	static PRM_Name boundingBoxSize("bounding_box_size", "BoundingBox Size");
+	static std::array<PRM_Default, 3> boundingBoxSizeDefault{2, 2, 2};
+
+	static PRM_Name boundingBoxCenter("bounding_box_center", "BoundingBox Center");
+	static std::array<PRM_Default, 3> boundingBoxCenterDefault{0, 0, 0};
+
+	static std::array<PRM_Template, 7> PRMS{
 			PRM_Template(PRM_STRING, 1, &theGeometryName, &theGeometryNameDefault),
 			PRM_Template(PRM_FLT, 1, &targetDensity, &targetDensityDefault),
 			PRM_Template(PRM_FLT, 1, &targetSpacing, &targetSpacingDefault),
 			PRM_Template(PRM_FLT, 1, &relativeKernelRadius, &relativeKernelRadiusDefault),
+			PRM_Template(PRM_FLT_J, 3, &boundingBoxSize, boundingBoxSizeDefault.data()),
+			PRM_Template(PRM_FLT_J, 3, &boundingBoxCenter, boundingBoxCenterDefault.data()),
 			PRM_Template()
 	};
 
@@ -257,7 +265,7 @@ const jet::Collider3Ptr GAS_JETPciSPHSolver::ExtractColliders(SIM_Object *obj, U
 
 			}
 
-			surfaces.emplace_back(collider->InnerSurface);
+			surfaces.emplace_back(collider->InnerSurfacePtr);
 		}
 	}
 
