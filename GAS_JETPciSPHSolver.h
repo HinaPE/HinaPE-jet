@@ -6,6 +6,43 @@
 
 #include "jet/jet.h"
 
+class SIM_JETCollider;
+class SIM_JETParticleData;
+
+/**
+ * Animation
+ * - update(frame)
+ * 		- onUpdate(frame)
+ * 			- initialize()
+ * 				- onInitialize()
+ * 					- updateCollider(dt)
+ * 					- updateEmitter(dt)
+ * 			- advanceTimeStep(dt)
+ * 				- onAdvanceTimeStep(dt)
+ * 					- beginAdvanceTimeStep(dt)
+ * 						- clear force
+ * 						- updateCollider(dt)
+ * 						- updateEmitter(dt)
+ * 						- allocate buffers
+ * 						- onBeginAdvanceTimeStep(dt)
+ * 							- buildNeighborLists()
+ * 							- updateDensities()
+ * 					- accumulateForces(dt)
+ * 						- accumulateNonPressureForces(dt)
+ * 							- accumulateExternalForces()
+ * 							- accumulateViscosityForce()
+ * 						- accumulatePressureForce(dt)
+ * 							- computePressure()
+ * 							- accumulatePressureForce(x, d, p, f)
+ * 					- timeIntegration(dt)
+ * 					- resolveCollision()
+ * 					- endAdvanceTimeStep(dt)
+ * 						- update data
+ * 						- onEndAdvanceTimeStep(dt)
+ * 							- computePseudoViscosity(dt)
+ * 							- record max density
+ */
+
 class GAS_JETPciSPHSolver : public GAS_SubSolver, public jet::PciSphSolver3
 {
 public:
@@ -30,6 +67,14 @@ DECLARE_DATAFACTORY(GAS_JETPciSPHSolver,
 					GAS_SubSolver,
 					"JET PciSPH SubSolver",
 					getDopDescription());
+
+private:
+	bool Solve(SIM_Object *obj, SIM_Time time, SIM_Time timestep, UT_WorkBuffer &error_msg);
+
+	const jet::ParticleSystemData3Ptr ExtractJetParticleData(SIM_Object *obj, UT_WorkBuffer &error_msg);
+	const jet::Vector3D ExtractGravity(SIM_Object *obj, UT_WorkBuffer &error_msg);
+	const jet::Collider3Ptr ExtractColliders(SIM_Object *obj, UT_WorkBuffer &error_msg);
+	const jet::ParticleEmitter3Ptr ExtractEmitter(SIM_Object *obj, UT_WorkBuffer &error_msg);
 };
 
 #endif //HINAPE_JET_GAS_JETPCISPHSOLVER_H

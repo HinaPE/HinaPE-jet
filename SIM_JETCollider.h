@@ -6,8 +6,8 @@
 #include <SIM/SIM_ColliderBFA.h>
 #include <SIM/SIM_SDFCollision.h>
 
+#include "jet/jet.h"
 
-// TODO: implement JET Collision Here
 class SIM_JETCollider : public SIM_Collider
 {
 protected:
@@ -16,10 +16,13 @@ protected:
 	bool collideObjectsSubclass(SIM_Engine &engine, SIM_Object &object, SIM_Object &affector, const SIM_Time &starttime, const SIM_Time &endtime, SIM_ImpactApplyType impactapplytype, int impactflags) const override;
 	void initializeSubclass() override;
 	void makeEqualSubclass(const SIM_Data *source) override;
-	static const SIM_DopDescription* GetDescription();
+	static const SIM_DopDescription *GetDescription();
 
 DECLARE_STANDARD_GETCASTTOTYPE();
 DECLARE_DATAFACTORY(SIM_JETCollider, SIM_Collider, "JET Collider", GetDescription());
+
+public:
+	jet::Collider3Ptr InnerDataPtr;
 };
 
 #endif //HINAPE_JET_SIM_JETCOLLIDER_H
