@@ -43,6 +43,8 @@ class SIM_JETParticleData;
  * 							- record max density
  */
 
+#define JET_PCISPHSOLVER_DATANAME "JETPciSPHSolver"
+
 class GAS_JETPciSPHSolver : public GAS_SubSolver, public jet::PciSphSolver3
 {
 public:
@@ -72,6 +74,7 @@ DECLARE_DATAFACTORY(GAS_JETPciSPHSolver,
 
 private:
 	bool Solve(SIM_Engine &engine, SIM_Object *obj, SIM_Time time, SIM_Time timestep, UT_WorkBuffer &error_msg);
+	bool SyncGeometry(SIM_Object *obj, UT_WorkBuffer &error_msg);
 
 	const jet::ParticleSystemData3Ptr ExtractJetParticleData(SIM_Object *obj, UT_WorkBuffer &error_msg);
 	const jet::Vector3D ExtractGravity(SIM_Object *obj, UT_WorkBuffer &error_msg);

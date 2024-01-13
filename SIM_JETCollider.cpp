@@ -33,7 +33,7 @@ const SIM_DopDescription *SIM_JETCollider::GetDescription()
 	static SIM_DopDescription DESC(true,
 								   "jet_collider",
 								   "Jet Collider",
-								   "JetCollider",
+								   JET_COLLIDER_DATANAME,
 								   classname(),
 								   PRMS.data());
 	return &DESC;

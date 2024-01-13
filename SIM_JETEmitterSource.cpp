@@ -40,7 +40,7 @@ const SIM_DopDescription *SIM_JETEmitterSource::GetDescription()
 	static SIM_DopDescription DESC(true,
 								   "jet_emitter_source",
 								   "Jet Emitter Source",
-								   "JetEmitterSource", // this is [DataName]
+								   JET_EMITTERSOURCE_DATANAME,
 								   classname(),
 								   PRMS.data());
 	return &DESC;

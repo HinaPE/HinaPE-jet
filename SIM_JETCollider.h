@@ -8,6 +8,8 @@
 
 #include "jet/jet.h"
 
+#define JET_COLLIDER_DATANAME "JetCollider"
+
 class SIM_JETCollider : public SIM_Collider
 {
 protected:

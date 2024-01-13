@@ -31,6 +31,8 @@ add_library(
         GAS_JETVolumeEmitter.h
         GAS_JETPciSPHSolver.cpp
         GAS_JETPciSPHSolver.h
+
+        hdk_interface/util_geometry.h
 )
 
 # Link Houdini Toolkit

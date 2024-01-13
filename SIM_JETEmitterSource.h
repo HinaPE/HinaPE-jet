@@ -8,6 +8,8 @@
 
 #include "jet/jet.h"
 
+#define JET_EMITTERSOURCE_DATANAME "JetEmitterSource"
+
 class SIM_JETEmitterSource : public SIM_Data, public SIM_OptionsUser
 {
 public:

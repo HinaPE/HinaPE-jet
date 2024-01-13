@@ -69,7 +69,7 @@ const SIM_DopDescription *GAS_JETPciSPHSolver::getDopDescription()
 	static SIM_DopDescription DESC(true,
 								   "jet_pcisph_solver",
 								   "JET PciSPH Solver",
-								   "JETPciSPHSolver",
+								   JET_PCISPHSOLVER_DATANAME,
 								   classname(),
 								   PRMS.data());
 	DESC.setGuideTemplates(PRMS_GUIDE.data());
@@ -98,6 +98,8 @@ void GAS_JETPciSPHSolver::initializeSubclass()
 	// Init Solver
 	setPseudoViscosityCoefficient(0);
 	setIsUsingFixedSubTimeSteps(false);
+
+	std::cout << "Hello Solver" << std::endl;
 }
 
 void GAS_JETPciSPHSolver::makeEqualSubclass(const SIM_Data *source)
@@ -157,19 +159,22 @@ bool GAS_JETPciSPHSolver::Solve(SIM_Engine &engine, SIM_Object *obj, SIM_Time ti
 		update(current);
 	}
 
-
 	// Write Back Result to GDP
-	{
-		SIM_GeometryCopy *geometry = SIM_DATA_GET(*obj, SIM_GEOMETRY_DATANAME, SIM_GeometryCopy);
-		//SIM_GeometryCopy *geometry = getOrCreateGeometry(obj, GAS_NAME_GEOMETRY); // notice!
-	}
+	if (!SyncGeometry(obj, error_msg))
+		return false;
+
+	return true;
+}
+
+bool GAS_JETPciSPHSolver::SyncGeometry(SIM_Object *obj, UT_WorkBuffer &error_msg)
+{
 
 	return true;
 }
 
 const jet::ParticleSystemData3Ptr GAS_JETPciSPHSolver::ExtractJetParticleData(SIM_Object *obj, UT_WorkBuffer &error_msg)
 {
-	SIM_JETParticleData *particle_data = SIM_DATA_GET(*obj, JETParticleData_Name, SIM_JETParticleData);
+	SIM_JETParticleData *particle_data = SIM_DATA_GET(*obj, JET_PARTICLEDATA_DATANAME, SIM_JETParticleData);
 	if (!particle_data)
 	{
 		error_msg.appendSprintf("Object: %s: No SIM_JETParticleData\n", obj->getName().toStdString().c_str());
@@ -227,7 +232,7 @@ const jet::Collider3Ptr GAS_JETPciSPHSolver::ExtractColliders(SIM_Object *obj, U
 			}
 
 			// Get Jet Collider
-			SIM_JETCollider *collider = SIM_DATA_GET(*collider_label, "JetCollider", SIM_JETCollider);
+			SIM_JETCollider *collider = SIM_DATA_GET(*collider_label, JET_COLLIDER_DATANAME, SIM_JETCollider);
 			if (!collider)
 			{
 				error_msg.appendSprintf("Object: %s: No SIM_JETCollider\n", affector->getName().toStdString().c_str());

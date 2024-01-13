@@ -47,7 +47,7 @@ const SIM_DopDescription *SIM_JETParticleData::GetDescription()
 	static SIM_DopDescription DESC(true,
 								   "jet_particle_data",
 								   "Jet Particle Data",
-								   "JetParticleData",
+								   JET_PARTICLEDATA_DATANAME,
 								   classname(),
 								   PRMS.data());
 	return &DESC;

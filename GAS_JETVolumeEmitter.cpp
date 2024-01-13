@@ -135,5 +135,5 @@ void GAS_JETVolumeEmitter::buildGuideGeometrySubclass(const SIM_RootData &root, 
 
 SIM_JETParticleData *GAS_JETVolumeEmitter::FetchJetParticleData(SIM_Object *obj)
 {
-	return SIM_DATA_GET(*obj, JETParticleData_Name, SIM_JETParticleData);
+	return SIM_DATA_GET(*obj, JET_PARTICLEDATA_DATANAME, SIM_JETParticleData);
 }
