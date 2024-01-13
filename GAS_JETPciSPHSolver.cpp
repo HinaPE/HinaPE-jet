@@ -1,5 +1,6 @@
 #include "GAS_JETPciSPHSolver.h"
 
+#include <SIM/SIM_Engine.h>
 #include <SIM/SIM_DopDescription.h>
 #include <SIM/SIM_Object.h>
 #include <SIM/SIM_ObjectArray.h>
@@ -8,6 +9,7 @@
 #include <SIM/SIM_GuideShared.h>
 #include <SIM/SIM_ColliderLabel.h>
 #include <SIM/SIM_ForceGravity.h>
+#include <SIM/SIM_Time.h>
 
 #include <PRM/PRM_Name.h>
 #include <PRM/PRM_Template.h>
@@ -24,6 +26,8 @@
 
 #include <UT/UT_WorkBuffer.h>
 #include <UT/UT_NetMessage.h>
+
+#include <iostream>
 
 PRM_Name GAS_JETPciSPHSolver::showGuideGeometry("show_guide_geometry", "Show Guide Geometry");
 
@@ -69,7 +73,7 @@ const SIM_DopDescription *GAS_JETPciSPHSolver::getDopDescription()
 bool GAS_JETPciSPHSolver::solveGasSubclass(SIM_Engine &engine, SIM_Object *obj, SIM_Time time, SIM_Time timestep)
 {
 	UT_WorkBuffer error_msg;
-	if (!Solve(obj, time, timestep, error_msg))
+	if (!Solve(engine, obj, time, timestep, error_msg))
 	{
 		if (error_msg.isstring())
 			std::cerr << "Error: " << error_msg.buffer() << std::endl;
@@ -82,6 +86,10 @@ bool GAS_JETPciSPHSolver::solveGasSubclass(SIM_Engine &engine, SIM_Object *obj, 
 void GAS_JETPciSPHSolver::initializeSubclass()
 {
 	SIM_Data::initializeSubclass();
+
+	// Init Solver
+	setPseudoViscosityCoefficient(0);
+	setIsUsingFixedSubTimeSteps(false);
 }
 
 void GAS_JETPciSPHSolver::makeEqualSubclass(const SIM_Data *source)
@@ -102,22 +110,10 @@ void GAS_JETPciSPHSolver::buildGuideGeometrySubclass(const SIM_RootData &root, c
 	if (!options.hasOption(showGuideGeometry.getToken()) || !options.getOptionB(showGuideGeometry.getToken()))
 		return;
 
-//	const UT_StringHolder &SOPPath = getSOPPath();
-//	SOP_Node *sop = getSOPNode(SOPPath, true);
-//	OP_Context context(t);
-//	GU_DetailHandle gdh_emitter = sop->getCookedGeoHandle(context);
-//	const GU_Detail *gdp_emitter = sop->getCookedGeo(context);
-//
-//	if (!gdh.isNull())
-//	{
-//		GU_DetailHandleAutoWriteLock gdl(gdh);
-//		GU_Detail *gdp = gdl.getGdp();
-//		gdp->clear();
-//		gdp->duplicate(*gdp_emitter);
-//	}
+	// TODO: setup Guide Geometry
 }
 
-bool GAS_JETPciSPHSolver::Solve(SIM_Object *obj, SIM_Time time, SIM_Time timestep, UT_WorkBuffer &error_msg)
+bool GAS_JETPciSPHSolver::Solve(SIM_Engine &engine, SIM_Object *obj, SIM_Time time, SIM_Time timestep, UT_WorkBuffer &error_msg)
 {
 	// Set Particle Data
 	{
@@ -129,13 +125,14 @@ bool GAS_JETPciSPHSolver::Solve(SIM_Object *obj, SIM_Time time, SIM_Time timeste
 	// Set Colliders
 	{
 		const jet::Collider3Ptr jet_colliders = ExtractColliders(obj, error_msg);
+		if (!jet_colliders) return false;
 		setCollider(jet_colliders);
 	}
 
-
-	// Set Emitter (Emitter理论上只和Data相关，不应该参与到流体Solver的流程中。在后期应该剥离这一部分，现在先临时加上。)
+	// Set Emitter
 	{
 		const jet::ParticleEmitter3Ptr jet_emitter = ExtractEmitter(obj, error_msg);
+		if (!jet_emitter) return false;
 		setEmitter(jet_emitter);
 	}
 
@@ -143,6 +140,13 @@ bool GAS_JETPciSPHSolver::Solve(SIM_Object *obj, SIM_Time time, SIM_Time timeste
 	{
 		jet::Vector3D GravityFinal = ExtractGravity(obj, error_msg);
 		setGravity(GravityFinal);
+	}
+
+	// Solve
+	{
+		jet::Frame current(engine.getSimulationFrame(time), timestep.operator fpreal64());
+		std::cout << "Frame: " << current.index << " Delta Time: " << current.timeIntervalInSeconds << std::endl;
+		update(current);
 	}
 
 
@@ -196,6 +200,8 @@ const jet::Vector3D GAS_JETPciSPHSolver::ExtractGravity(SIM_Object *obj, UT_Work
 
 const jet::Collider3Ptr GAS_JETPciSPHSolver::ExtractColliders(SIM_Object *obj, UT_WorkBuffer &error_msg)
 {
+	std::vector<jet::Surface3Ptr> surfaces;
+
 	SIM_ObjectArray affectors;
 	obj->getAffectors(affectors, "SIM_RelationshipCollide"); // We Only Need Collide Relationship
 	exint num_affectors = affectors.entries();
@@ -250,10 +256,18 @@ const jet::Collider3Ptr GAS_JETPciSPHSolver::ExtractColliders(SIM_Object *obj, U
 			{
 
 			}
+
+			surfaces.emplace_back(collider->InnerSurface);
 		}
 	}
 
-	return jet::Collider3Ptr();
+//	auto surface_set = jet::ImplicitSurfaceSet3::builder()
+//			.withExplicitSurfaces(surfaces)
+//			.makeShared();
+//	jet::RigidBodyCollider3Ptr colliders = jet::RigidBodyCollider3::builder().withSurface(surface_set).makeShared();
+//	return colliders;
+
+	return jet::RigidBodyCollider3::builder().makeShared();
 }
 
 const jet::ParticleEmitter3Ptr GAS_JETPciSPHSolver::ExtractEmitter(SIM_Object *obj, UT_WorkBuffer &error_msg)

@@ -69,7 +69,7 @@ DECLARE_DATAFACTORY(GAS_JETPciSPHSolver,
 					getDopDescription());
 
 private:
-	bool Solve(SIM_Object *obj, SIM_Time time, SIM_Time timestep, UT_WorkBuffer &error_msg);
+	bool Solve(SIM_Engine &engine, SIM_Object *obj, SIM_Time time, SIM_Time timestep, UT_WorkBuffer &error_msg);
 
 	const jet::ParticleSystemData3Ptr ExtractJetParticleData(SIM_Object *obj, UT_WorkBuffer &error_msg);
 	const jet::Vector3D ExtractGravity(SIM_Object *obj, UT_WorkBuffer &error_msg);

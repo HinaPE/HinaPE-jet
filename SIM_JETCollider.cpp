@@ -45,6 +45,9 @@ const SIM_DopDescription *SIM_JETCollider::GetDescription()
 void SIM_JETCollider::initializeSubclass()
 {
 	SIM_Data::initializeSubclass();
+
+	InnerSurface = jet::TriangleMesh3::builder()
+			.makeShared();
 }
 
 void SIM_JETCollider::makeEqualSubclass(const SIM_Data *source)
