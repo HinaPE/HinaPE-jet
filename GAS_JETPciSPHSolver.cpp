@@ -27,7 +27,7 @@
 #include <UT/UT_WorkBuffer.h>
 #include <UT/UT_NetMessage.h>
 
-#include <iostream>
+#include "hdk_interface/util_geometry.h"
 
 PRM_Name GAS_JETPciSPHSolver::showGuideGeometry("show_guide_geometry", "Show Guide Geometry");
 
@@ -98,8 +98,6 @@ void GAS_JETPciSPHSolver::initializeSubclass()
 	// Init Solver
 	setPseudoViscosityCoefficient(0);
 	setIsUsingFixedSubTimeSteps(false);
-
-	std::cout << "Hello Solver" << std::endl;
 }
 
 void GAS_JETPciSPHSolver::makeEqualSubclass(const SIM_Data *source)

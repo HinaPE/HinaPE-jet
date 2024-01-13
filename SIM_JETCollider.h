@@ -6,12 +6,17 @@
 #include <SIM/SIM_ColliderBFA.h>
 #include <SIM/SIM_SDFCollision.h>
 
+#include <PRM/PRM_Name.h>
+
 #include "jet/jet.h"
 
 #define JET_COLLIDER_DATANAME "JetCollider"
 
 class SIM_JETCollider : public SIM_Collider
 {
+public:
+	GETSET_DATA_FUNCS_S("soppath", SOPPath)
+
 protected:
 	SIM_JETCollider(const SIM_DataFactory *factory) : SIM_Collider(factory) {}
 	~SIM_JETCollider() override = default;
@@ -19,6 +24,10 @@ protected:
 	void initializeSubclass() override;
 	void makeEqualSubclass(const SIM_Data *source) override;
 	static const SIM_DopDescription *GetDescription();
+
+	SIM_Guide *createGuideObjectSubclass() const override;
+	void buildGuideGeometrySubclass(const SIM_RootData &root, const SIM_Options &options, const GU_DetailHandle &gdh, UT_DMatrix4 *xform, const SIM_Time &t) const override;
+	static PRM_Name showGuideGeometry;
 
 DECLARE_STANDARD_GETCASTTOTYPE();
 DECLARE_DATAFACTORY(SIM_JETCollider, SIM_Collider, "JET Collider", GetDescription());

@@ -86,7 +86,7 @@ const SIM_DopDescription *GAS_JETVolumeEmitter::getDopDescription()
 	};
 
 	static std::array<PRM_Template, 2> PRMS_GUIDE{
-			PRM_Template(PRM_TOGGLE, 1, &showGuideGeometry, PRMzeroDefaults),
+			PRM_Template(PRM_TOGGLE, 1, &showGuideGeometry, PRMoneDefaults),
 			PRM_Template()
 	};
 
