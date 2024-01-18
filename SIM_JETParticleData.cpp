@@ -229,8 +229,8 @@ bool SIM_JETParticleData::UpdateFromGeometrySheet(SIM_Object *obj, UT_WorkBuffer
 	GA_RWHandleI data_state_handle = gdp.findPointAttribute(JetParticleDataStateAttributeName);
 
 	// If particles is added/deleted inside Houdini Software, we need to consider the default value that GDP will assign
-	// to. We may easily get that, if a new particle is created, the [JetIndexAttribute] would be [0], so it means that
-	// [0] represents this particle is new added
+	// to. We may easily get that, if a new particle is created, the [JetParticleDataStateAttributeName] would be [0],
+	// which is also [PARTICLE_ADDED], so it means that [0] represents this particle is new added
 	auto particle_size = jet::ParticleSystemData3::numberOfParticles();
 	auto offset_map_array = jet::ParticleSystemData3::scalarDataAt(scalar_index_geo_offset);
 	auto particle_state_array = jet::ParticleSystemData3::scalarDataAt(scalar_index_particle_state);
@@ -253,15 +253,20 @@ bool SIM_JETParticleData::UpdateFromGeometrySheet(SIM_Object *obj, UT_WorkBuffer
 				const UT_Vector3 vel = vel_handle.get(pt_off);
 				const UT_Vector3 force = force_handle.get(pt_off);
 				const fpreal mass = mass_handle.get(pt_off); // new, we deal with every particle as the same particles
-				const int jet_idx = jet_idx_map_handle.get(pt_off);
 				const ParticleState state = (ParticleState) data_state_handle.get(pt_off);
+				int jet_idx = jet_idx_map_handle.get(pt_off);
 
 				if (state == PARTICLE_ADDED)
 				{
-					size_t new_jet_particle_index = AddJETParticle(pt_off, pos, vel, force);
+					jet_idx = AddJETParticle(pt_off, pos, vel, force);
+					jet_idx_map_handle.set(pt_off, jet_idx);
 					data_state_handle.set(pt_off, PARTICLE_CLEAN);
 				}
-//				jet_idx_map_handle.set(particle_offset, pt_idx); // mapping [Jet Particle] to [GDP Particle]
+				offset_map_array.at(jet_idx) = pt_off; // mapping [Jet Particle] to [GDP Particle]
+
+				pos_array.at(jet_idx) = jet::Vector3D{pos.x(), pos.y(), pos.z()};
+				vel_array.at(jet_idx) = jet::Vector3D{vel.x(), vel.y(), vel.z()};
+				force_array.at(jet_idx) = jet::Vector3D{force.x(), force.y(), force.z()};
 			}
 	}
 
