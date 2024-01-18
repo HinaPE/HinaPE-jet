@@ -27,30 +27,7 @@ const char *SIM_JETParticleData::DATANAME = "JetParticleData";
 
 const SIM_DopDescription *SIM_JETParticleData::GetDescription()
 {
-	static PRM_Name DataType[] =
-			{
-					PRM_Name("0", "SPHData"),
-					PRM_Name("1", "PciSPHData"),
-					PRM_Name(0)
-			};
-
-	static PRM_ChoiceList particleDataType((PRM_ChoiceListType) (PRM_CHOICELIST_SINGLE), &(DataType[0]));
-	static PRM_Name particleDataTypeName("particleDataType", "Particle Data Type");
-
-	static PRM_Name targetDensity("target_density", "Target Density");
-	static PRM_Default targetDensityDefault(1000.f);
-
-	static PRM_Name targetSpacing("target_spacing", "Target Spacing");
-	static PRM_Default targetSpacingDefault(0.02f);
-
-	static PRM_Name relativeKernelRadius("relative_kernel_radius", "Relative Kernel Radius");
-	static PRM_Default relativeKernelRadiusDefault(1.8f);
-
-	static std::array<PRM_Template, 5> PRMS{
-			PRM_Template(PRM_INT, 1, &particleDataTypeName, 0, &particleDataType),
-			PRM_Template(PRM_FLT, 1, &targetDensity, &targetDensityDefault),
-			PRM_Template(PRM_FLT, 1, &targetSpacing, &targetSpacingDefault),
-			PRM_Template(PRM_FLT, 1, &relativeKernelRadius, &relativeKernelRadiusDefault),
+	static std::array<PRM_Template, 1> PRMS{
 			PRM_Template()
 	};
 
@@ -66,14 +43,6 @@ const SIM_DopDescription *SIM_JETParticleData::GetDescription()
 void SIM_JETParticleData::initializeSubclass()
 {
 	BaseClass::initializeSubclass();
-
-	float target_density = getTargetDensity();
-	float target_spacing = getTargetSpacing();
-	float relative_kernel_radius = getRelativeKernelRadius();
-
-	setTargetDensity(target_density);
-	setTargetSpacing(target_spacing);
-	setRelativeKernelRadius(relative_kernel_radius);
 
 	scalar_index_geo_offset = jet::ParticleSystemData3::addScalarData(); // Mapping Jet Particle Index and HDK gdp
 	scalar_index_particle_state = jet::ParticleSystemData3::addScalarData(PARTICLE_ADDED); // ParticleState
@@ -134,7 +103,6 @@ bool SIM_JETParticleData::UpdateToGeometrySheet(SIM_Object *obj, UT_WorkBuffer &
 	GA_RWHandleI jet_idx_map_handle = gdp.findPointAttribute(JetIndexMapAttributeName);
 	GA_RWHandleI data_state_handle = gdp.findPointAttribute(JetParticleDataStateAttributeName);
 
-	const auto particle_size = jet::ParticleSystemData3::numberOfParticles();
 	auto offset_map_array = jet::ParticleSystemData3::scalarDataAt(scalar_index_geo_offset);
 	auto particle_state_array = jet::ParticleSystemData3::scalarDataAt(scalar_index_particle_state);
 	const auto pos_array = jet::ParticleSystemData3::positions();
@@ -142,6 +110,8 @@ bool SIM_JETParticleData::UpdateToGeometrySheet(SIM_Object *obj, UT_WorkBuffer &
 	const auto force_array = jet::ParticleSystemData3::forces();
 	const auto mass = jet::ParticleSystemData3::mass();
 
+	const auto particle_size = jet::ParticleSystemData3::numberOfParticles();
+	// check data valid
 	if (
 			particle_size != offset_map_array.size() &&
 			particle_size != particle_state_array.size() &&

@@ -14,10 +14,6 @@ class SIM_JETParticleData : public SIM_Data, public SIM_OptionsUser, public jet:
 {
 public:
 	static const char *DATANAME;
-	GETSET_DATA_FUNCS_F("target_density", TargetDensity)
-	GETSET_DATA_FUNCS_F("target_spacing", TargetSpacing)
-	GETSET_DATA_FUNCS_F("relative_kernel_radius", RelativeKernelRadius)
-	GETSET_DATA_FUNCS_S("particleDataType", ParticleDataTypeName)
 
 protected:
 	SIM_JETParticleData(const SIM_DataFactory *factory) : SIM_Data(factory), SIM_OptionsUser(this) {}
