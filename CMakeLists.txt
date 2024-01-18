@@ -22,17 +22,21 @@ add_library(
 
         SIM_JETParticleData.cpp
         SIM_JETParticleData.h
-        SIM_JETEmitterSource.cpp
-        SIM_JETEmitterSource.h
-        SIM_JETCollider.cpp
-        SIM_JETCollider.h
+#        SIM_JETEmitterSource.cpp
+#        SIM_JETEmitterSource.h
+#        SIM_JETCollider.cpp
+#        SIM_JETCollider.h
 
-        GAS_JETVolumeEmitter.cpp
-        GAS_JETVolumeEmitter.h
-        GAS_JETPciSPHSolver.cpp
-        GAS_JETPciSPHSolver.h
+#        GAS_JETVolumeEmitter.cpp
+#        GAS_JETVolumeEmitter.h
+#        GAS_JETPciSPHSolver.cpp
+#        GAS_JETPciSPHSolver.h
+#        GAS_JETSyncData.cpp
+#        GAS_JETSyncData.h
 
-        hdk_interface/util_geometry.h
+#        hdk_interface/util_geometry.h
+        utils_jet.cpp
+        utils_jet.h
 )
 
 # Link Houdini Toolkit

@@ -18,6 +18,8 @@
 #include <PRM/PRM_Utils.h>
 #include <PRM/PRM_SpareData.h>
 
+#include <GEO/GEO_PrimPart.h>
+
 #include <SOP/SOP_Node.h>
 
 #include <SIM_JETParticleData.h>
@@ -28,6 +30,7 @@
 #include <UT/UT_NetMessage.h>
 
 #include "hdk_interface/util_geometry.h"
+#include "utils_jet.h"
 
 PRM_Name GAS_JETPciSPHSolver::showGuideGeometry("show_guide_geometry", "Show Guide Geometry");
 
@@ -123,165 +126,116 @@ void GAS_JETPciSPHSolver::buildGuideGeometrySubclass(const SIM_RootData &root, c
 
 bool GAS_JETPciSPHSolver::Solve(SIM_Engine &engine, SIM_Object *obj, SIM_Time time, SIM_Time timestep, UT_WorkBuffer &error_msg)
 {
-	// Set Particle Data
-	{
-		const jet::ParticleSystemData3Ptr jet_data_ptr = ExtractJetParticleData(obj, error_msg);
-		if (!jet_data_ptr) return false;
-		setParticleSystemData(jet_data_ptr);
-	}
-
-	// Set Colliders
-	{
-		const jet::Collider3Ptr jet_colliders = ExtractColliders(obj, error_msg);
-		if (!jet_colliders) return false;
-		setCollider(jet_colliders);
-	}
-
-	// Set Emitter
-	{
-		const jet::ParticleEmitter3Ptr jet_emitter = ExtractEmitter(obj, error_msg);
-		if (!jet_emitter) return false;
-		setEmitter(jet_emitter);
-	}
-
-	// External Force
-	{
-		jet::Vector3D GravityFinal = ExtractGravity(obj, error_msg);
-		setGravity(GravityFinal);
-	}
-
-	// Solve
-	{
-		jet::Frame current(engine.getSimulationFrame(time), timestep.operator fpreal64());
-		std::cout << "Frame: " << current.index << " Delta Time: " << current.timeIntervalInSeconds << std::endl;
-		update(current);
-	}
-
-	// Write Back Result to GDP
-	if (!SyncGeometry(obj, error_msg))
-		return false;
+	jet::Logging::mute();
+//
+//	jet::BoundingBox3D domain(jet::Vector3D(), jet::Vector3D(1, 2, 1));
+//
+//	// Set Particle Data
+//	{
+//		const jet::ParticleSystemData3Ptr jet_data_ptr = ExtractJetParticleData(obj, error_msg);
+//		if (!jet_data_ptr) return false;
+//		setParticleSystemData(jet_data_ptr);
+//	}
+//
+//	{
+//		jet::ParticleSystemData3Ptr jet_data_ptr = ExtractJetParticleData(obj, error_msg);
+//
+//		// 假设这个solver是发射粒子用的（不一定必须是JET的emitter）
+//		for (int i = 0; i < jet_data_ptr->positions().size(); ++i)
+//		{
+//			jet::Vector3D pos = jet_data_ptr->positions()[i];
+//		}
+//	}
+//
+//	// Set Colliders
+//	{
+////		const jet::Collider3Ptr jet_colliders = ExtractColliders(obj, error_msg);
+////		if (!jet_colliders) return false;
+//		auto box = jet::Box3::builder()
+//				.withIsNormalFlipped(true)
+//				.withBoundingBox(domain)
+//				.makeShared();
+//
+//		auto collider = jet::RigidBodyCollider3::builder().withSurface(box).makeShared();
+//		setCollider(collider);
+//	}
+//
+//	// Set Emitter
+//	{
+////		const jet::ParticleEmitter3Ptr jet_emitter = ExtractEmitter(obj, error_msg);
+////		if (!jet_emitter) return false;
+//		jet::BoundingBox3D sourceBound(domain);
+//		sourceBound.expand(-getTargetSpacing());
+//
+//		auto plane = jet::Plane3::builder()
+//				.withNormal({0, 1, 0})
+//				.withPoint({0, 0.25 * domain.height(), 0})
+//				.makeShared();
+//
+//		auto sphere = jet::Sphere3::builder()
+//				.withCenter(domain.midPoint())
+//				.withRadius(0.15 * domain.width())
+//				.makeShared();
+//
+//		auto surfaceSet = jet::ImplicitSurfaceSet3::builder()
+//				.withExplicitSurfaces({plane, sphere})
+//				.makeShared();
+//
+//		auto emitter = jet::VolumeParticleEmitter3::builder()
+//				.withImplicitSurface(surfaceSet)
+//				.withSpacing(getTargetSpacing())
+//				.withMaxRegion(sourceBound)
+//				.withIsOneShot(true)
+//				.makeShared();
+//		setEmitter(emitter);
+//	}
+//
+//	// External Force
+//	{
+//		jet::Vector3D GravityFinal = ExtractJetGravity(obj, error_msg);
+//		setGravity(GravityFinal);
+//	}
+//
+//	// Solve
+//	{
+//		jet::Frame current(engine.getSimulationFrame(time), timestep.operator fpreal64());
+//		std::cout << "Frame: " << current.index << " Delta Time: " << current.timeIntervalInSeconds << std::endl;
+//		update(current);
+//		std::cout << "Completed " << std::endl;
+//	}
+//
+////	// Write Back Result to GDP
+//	if (!SyncGeometry(obj, error_msg))
+//		return false;
 
 	return true;
 }
 
 bool GAS_JETPciSPHSolver::SyncGeometry(SIM_Object *obj, UT_WorkBuffer &error_msg)
 {
+	SIM_GeometryCopy *geo = nullptr;
+	geo = SIM_DATA_GET(*obj, SIM_GEOMETRY_DATANAME, SIM_GeometryCopy);
+	if (!geo)
+	{
+		geo = SIM_DATA_CREATE(*obj, SIM_GEOMETRY_DATANAME, SIM_GeometryCopy,
+							  SIM_DATA_RETURN_EXISTING | SIM_DATA_ADOPT_EXISTING_ON_DELETE);
+		SIM_GeometryAutoWriteLock lock(geo);
+		GU_Detail &gdp = lock.getGdp();
+		gdp.clearAndDestroy();
+	}
+
+	if (!geo)
+		return false;
+
+	SIM_GeometryAutoWriteLock lock(geo);
+	GU_Detail &gdp = lock.getGdp();
+	gdp.clearAndDestroy();
+
+	for (const auto &pos: particleSystemData()->positions())
+	{
+		GA_Offset offset = gdp.appendPoint();
+		gdp.setPos3(offset, UT_Vector3(pos.x, pos.y, pos.z));
+	}
 
 	return true;
-}
-
-const jet::ParticleSystemData3Ptr GAS_JETPciSPHSolver::ExtractJetParticleData(SIM_Object *obj, UT_WorkBuffer &error_msg)
-{
-	SIM_JETParticleData *particle_data = SIM_DATA_GET(*obj, JET_PARTICLEDATA_DATANAME, SIM_JETParticleData);
-	if (!particle_data)
-	{
-		error_msg.appendSprintf("Object: %s: No SIM_JETParticleData\n", obj->getName().toStdString().c_str());
-		return nullptr;
-	}
-
-	if (!particle_data->InnerDataPtr)
-	{
-		error_msg.appendSprintf("Object: %s: No SIM_JETParticleData::InnerDataPtr\n", obj->getName().toStdString().c_str());
-		return nullptr;
-	}
-
-	return particle_data->InnerDataPtr;
-}
-
-const jet::Vector3D GAS_JETPciSPHSolver::ExtractGravity(SIM_Object *obj, UT_WorkBuffer &error_msg)
-{
-	jet::Vector3D GravityFinal;
-
-	//Find and Apply Gravity
-	SIM_ConstDataArray gravities;
-	obj->filterConstSubData(gravities, 0, SIM_DataFilterByType("SIM_ForceGravity"), SIM_FORCES_DATANAME, SIM_DataFilterNone());
-	for (exint i = 0; i < gravities.entries(); ++i)
-	{
-		const SIM_ForceGravity *force = SIM_DATA_CASTCONST(gravities(i), SIM_ForceGravity);
-		if (!force)
-			continue;
-		UT_Vector3 outForce, outTorque;
-		force->getForce(*obj, UT_Vector3(), UT_Vector3(), UT_Vector3(), 1.0f, outForce, outTorque); // TODO: assume mass is 1.0f
-
-		GravityFinal += {outForce.x(), outForce.y(), outForce.z()};
-	}
-
-	return GravityFinal;
-}
-
-const jet::Collider3Ptr GAS_JETPciSPHSolver::ExtractColliders(SIM_Object *obj, UT_WorkBuffer &error_msg)
-{
-	std::vector<jet::Surface3Ptr> surfaces;
-
-	SIM_ObjectArray affectors;
-	obj->getAffectors(affectors, "SIM_RelationshipCollide"); // We Only Need Collide Relationship
-	exint num_affectors = affectors.entries();
-	for (exint i = 0; i < num_affectors; ++i)
-	{
-		SIM_Object *affector = affectors(i);
-		if (!affector->getName().equal(obj->getName()))
-		{
-			// Get Sim Collider
-			SIM_ColliderLabel *collider_label = SIM_DATA_GET(*affector, SIM_COLLIDERS_DATANAME, SIM_ColliderLabel);
-			if (!collider_label)
-			{
-				error_msg.appendSprintf("Object: %s: No SIM_ColliderLabel\n", affector->getName().toStdString().c_str());
-				continue;
-			}
-
-			// Get Jet Collider
-			SIM_JETCollider *collider = SIM_DATA_GET(*collider_label, JET_COLLIDER_DATANAME, SIM_JETCollider);
-			if (!collider)
-			{
-				error_msg.appendSprintf("Object: %s: No SIM_JETCollider\n", affector->getName().toStdString().c_str());
-				continue;
-			}
-
-			// Check Collider Label
-			const UT_StringHolder label_affector = collider_label->getColliderLabel(); // "None", "Default", "Volume"... etc.
-			if (label_affector.equal(SIM_COLLIDERLABEL_NONE))
-			{
-
-			} else if (label_affector.equal(SIM_COLLIDERLABEL_DEFAULT))
-			{
-
-			} else if (label_affector.equal(SIM_COLLIDERLABEL_SELF))
-			{
-
-			} else if (label_affector.equal(SIM_COLLIDERLABEL_PARTICLE))
-			{
-
-			} else if (label_affector.equal(SIM_COLLIDERLABEL_WIRE))
-			{
-
-			} else if (label_affector.equal(SIM_COLLIDERLABEL_CLOTH))
-			{
-
-			} else if (label_affector.equal(SIM_COLLIDERLABEL_VOLUME))
-			{
-
-			} else if (label_affector.equal(SIM_COLLIDERLABEL_THINPLATE))
-			{
-
-			} else if (label_affector.equal(SIM_COLLIDERLABEL_PACKEDOBJECT))
-			{
-
-			}
-
-			surfaces.emplace_back(collider->InnerSurfacePtr);
-		}
-	}
-
-//	auto surface_set = jet::ImplicitSurfaceSet3::builder()
-//			.withExplicitSurfaces(surfaces)
-//			.makeShared();
-//	jet::RigidBodyCollider3Ptr colliders = jet::RigidBodyCollider3::builder().withSurface(surface_set).makeShared();
-//	return colliders;
-
-	return jet::RigidBodyCollider3::builder().makeShared();
-}
-
-const jet::ParticleEmitter3Ptr GAS_JETPciSPHSolver::ExtractEmitter(SIM_Object *obj, UT_WorkBuffer &error_msg)
-{
-	return jet::ParticleEmitter3Ptr();
 }

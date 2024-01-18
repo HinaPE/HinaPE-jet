@@ -23,15 +23,6 @@ PRM_Name GAS_JETVolumeEmitter::showGuideGeometry("show_guide_geometry", "Show Gu
 bool GAS_JETVolumeEmitter::solveGasSubclass(SIM_Engine &engine, SIM_Object *obj, SIM_Time time, SIM_Time timestep)
 {
 	SIM_GeometryCopy *geometry = getOrCreateGeometry(obj, GAS_NAME_GEOMETRY);
-	SIM_JETParticleData *ParticleData = FetchJetParticleData(obj);
-
-	{
-		// Sync Simulation Result
-		SIM_GeometryAutoWriteLock lock(geometry);
-		GU_Detail &gdp = lock.getGdp();
-
-//		gdp.getOffset
-	}
 
 	return true;
 }
@@ -131,9 +122,4 @@ void GAS_JETVolumeEmitter::buildGuideGeometrySubclass(const SIM_RootData &root, 
 		gdp->clear();
 		gdp->duplicate(*gdp_emitter);
 	}
-}
-
-SIM_JETParticleData *GAS_JETVolumeEmitter::FetchJetParticleData(SIM_Object *obj)
-{
-	return SIM_DATA_GET(*obj, JET_PARTICLEDATA_DATANAME, SIM_JETParticleData);
 }

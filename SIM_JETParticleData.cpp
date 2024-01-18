@@ -15,6 +15,14 @@
 #include <PRM/PRM_SpareData.h>
 #include <PRM/PRM_ChoiceList.h>
 
+#include "jet/jet.h"
+
+UT_StringHolder JetIndexAttributeName("JetIdx");
+UT_StringHolder DensityAttributeName("Dens");
+UT_StringHolder PressureAttributeName("Pres");
+
+const char * SIM_JETParticleData::DATANAME = "JetParticleData";
+
 const SIM_DopDescription *SIM_JETParticleData::GetDescription()
 {
 	static PRM_Name DataType[] =
@@ -47,7 +55,7 @@ const SIM_DopDescription *SIM_JETParticleData::GetDescription()
 	static SIM_DopDescription DESC(true,
 								   "jet_particle_data",
 								   "Jet Particle Data",
-								   JET_PARTICLEDATA_DATANAME,
+								   DATANAME,
 								   classname(),
 								   PRMS.data());
 	return &DESC;
@@ -61,12 +69,9 @@ void SIM_JETParticleData::initializeSubclass()
 	float target_spacing = getTargetSpacing();
 	float relative_kernel_radius = getRelativeKernelRadius();
 
-	auto data = std::make_shared<jet::SphSystemData3>();
-	data->setTargetDensity(target_density);
-	data->setTargetSpacing(target_spacing);
-	data->setRelativeKernelRadius(relative_kernel_radius);
-	this->InnerDataPtr.reset();
-	this->InnerDataPtr = data;
+	setTargetDensity(target_density);
+	setTargetSpacing(target_spacing);
+	setRelativeKernelRadius(relative_kernel_radius);
 }
 
 void SIM_JETParticleData::makeEqualSubclass(const SIM_Data *source)
@@ -74,5 +79,35 @@ void SIM_JETParticleData::makeEqualSubclass(const SIM_Data *source)
 	BaseClass::makeEqualSubclass(source);
 
 	const SIM_JETParticleData *src = SIM_DATA_CASTCONST(source, SIM_JETParticleData);
-	this->InnerDataPtr = src->InnerDataPtr;
+	static_cast<jet::ParticleSystemData3 &>(*this) = static_cast<const jet::ParticleSystemData3 &>(*src); // [important] Notice this usage!
+}
+
+bool SIM_JETParticleData::UpdateToGeometrySheet(SIM_Object *obj, UT_WorkBuffer &error_msg)
+{
+	if (!obj)
+	{
+		error_msg.appendSprintf("Object Is Null, From %s\n", DATANAME);
+		return false;
+	}
+
+	auto pos_array = jet::ParticleSystemData3::positions();
+	auto pos_array_size = pos_array.size();
+	for (int pos_idx = 0; pos_idx < pos_array_size; ++pos_idx)
+	{
+		auto map_index = jet::ParticleSystemData3::addScalarData();
+	}
+
+	return true;
+}
+
+bool SIM_JETParticleData::UpdateFromGeometrySheet(SIM_Object *obj, UT_WorkBuffer &error_msg)
+{
+	if (!obj)
+	{
+		error_msg.appendSprintf("Object Is Null, From %s\n", DATANAME);
+		return false;
+	}
+
+
+	return true;
 }

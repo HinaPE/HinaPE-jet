@@ -34,9 +34,6 @@ DECLARE_DATAFACTORY(GAS_JETVolumeEmitter,
 					GAS_SubSolver,
 					"JET Volume Emitter SubSolver",
 					getDopDescription());
-
-public:
-	SIM_JETParticleData* FetchJetParticleData(SIM_Object *obj);
 };
 
 #endif //HINAPE_JET_GAS_JETVOLUMEEMITTER_H
