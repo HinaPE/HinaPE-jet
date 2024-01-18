@@ -13,7 +13,7 @@
 class SIM_JETParticleData : public SIM_Data, public SIM_OptionsUser, public jet::ParticleSystemData3
 {
 public:
-	static const char * DATANAME;
+	static const char *DATANAME;
 	GETSET_DATA_FUNCS_F("target_density", TargetDensity)
 	GETSET_DATA_FUNCS_F("target_spacing", TargetSpacing)
 	GETSET_DATA_FUNCS_F("relative_kernel_radius", RelativeKernelRadius)
@@ -30,10 +30,21 @@ DECLARE_STANDARD_GETCASTTOTYPE();
 DECLARE_DATAFACTORY(SIM_JETParticleData, SIM_Data, "JET Particle Data", GetDescription());
 
 public:
- 	bool UpdateToGeometrySheet(SIM_Object *obj, UT_WorkBuffer &error_msg);
+	void AddJETParticle(const UT_Vector3 &new_position, const UT_Vector3 &new_velocity = UT_Vector3(0.), const UT_Vector3 &new_force = UT_Vector3(0.));
+
+	bool UpdateToGeometrySheet(SIM_Object *obj, UT_WorkBuffer &error_msg);
 	bool UpdateFromGeometrySheet(SIM_Object *obj, UT_WorkBuffer &error_msg);
 	static size_t scalar_index_geo_offset;
-	static size_t scalar_index_is_new;
+	static size_t scalar_index_particle_state; // added/dirty/deleted... etc.
+	bool dirty = false;
+
+	enum ParticleState
+	{
+		PARTICLE_ADDED = 0, // default value
+		PARTICLE_DELETED = 1,
+		PARTICLE_CLEAN = 2,
+		PARTICLE_DIRTY = 3,
+	};
 };
 
 #endif //HINAPE_JET_SIM_JETPARTICLEDATA_H

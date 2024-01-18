@@ -18,9 +18,10 @@
 #include "jet/jet.h"
 
 size_t SIM_JETParticleData::scalar_index_geo_offset = -1;
-size_t SIM_JETParticleData::scalar_index_is_new = -1;
+size_t SIM_JETParticleData::scalar_index_particle_state = -1;
 
 UT_StringHolder JetIndexAttributeName("JetIdx");
+UT_StringHolder JetParticleDataStateAttributeName("State");
 
 const char *SIM_JETParticleData::DATANAME = "JetParticleData";
 
@@ -75,7 +76,7 @@ void SIM_JETParticleData::initializeSubclass()
 	setRelativeKernelRadius(relative_kernel_radius);
 
 	scalar_index_geo_offset = jet::ParticleSystemData3::addScalarData(); // Mapping Jet Particle Index and HDK gdp
-	scalar_index_is_new = jet::ParticleSystemData3::addScalarData(true); // is_new flag: 1 for new, 0 for old
+	scalar_index_particle_state = jet::ParticleSystemData3::addScalarData(PARTICLE_ADDED); // ParticleState
 }
 
 void SIM_JETParticleData::makeEqualSubclass(const SIM_Data *source)
@@ -84,6 +85,21 @@ void SIM_JETParticleData::makeEqualSubclass(const SIM_Data *source)
 
 	const SIM_JETParticleData *src = SIM_DATA_CASTCONST(source, SIM_JETParticleData);
 	static_cast<jet::ParticleSystemData3 &>(*this) = static_cast<const jet::ParticleSystemData3 &>(*src); // [important] Notice this usage!
+}
+
+void SIM_JETParticleData::AddJETParticle(const UT_Vector3 &new_position, const UT_Vector3 &new_velocity, const UT_Vector3 &new_force)
+{
+	addParticle(
+			jet::Vector3D{new_position.x(), new_position.y(), new_position.z()},
+			jet::Vector3D{new_velocity.x(), new_velocity.y(), new_velocity.z()},
+			jet::Vector3D{new_force.x(), new_force.y(), new_force.z()}
+	);
+
+	// update our unique scalar / vector fields
+	auto offset_map_array = jet::ParticleSystemData3::scalarDataAt(scalar_index_geo_offset);
+	auto particle_state_array = jet::ParticleSystemData3::scalarDataAt(scalar_index_particle_state);
+
+	dirty = true;
 }
 
 bool SIM_JETParticleData::UpdateToGeometrySheet(SIM_Object *obj, UT_WorkBuffer &error_msg)
@@ -112,17 +128,17 @@ bool SIM_JETParticleData::UpdateToGeometrySheet(SIM_Object *obj, UT_WorkBuffer &
 	GA_RWHandleF mass_handle = gdp.findPointAttribute(gdp.getStdAttributeName(GEO_ATTRIBUTE_MASS));
 	GA_RWHandleI jet_idx_handle = gdp.findPointAttribute(JetIndexAttributeName);
 
-	auto particle_size = jet::ParticleSystemData3::numberOfParticles();
+	const auto particle_size = jet::ParticleSystemData3::numberOfParticles();
 	auto offset_map_array = jet::ParticleSystemData3::scalarDataAt(scalar_index_geo_offset);
-	auto index_is_new_array = jet::ParticleSystemData3::scalarDataAt(scalar_index_is_new);
-	auto pos_array = jet::ParticleSystemData3::positions();
-	auto vel_array = jet::ParticleSystemData3::velocities();
-	auto force_array = jet::ParticleSystemData3::forces();
-	auto mass = jet::ParticleSystemData3::mass();
+	auto particle_state_array = jet::ParticleSystemData3::scalarDataAt(scalar_index_particle_state);
+	const auto pos_array = jet::ParticleSystemData3::positions();
+	const auto vel_array = jet::ParticleSystemData3::velocities();
+	const auto force_array = jet::ParticleSystemData3::forces();
+	const auto mass = jet::ParticleSystemData3::mass();
 
 	if (
 			particle_size != offset_map_array.size() &&
-			particle_size != index_is_new_array.size() &&
+			particle_size != particle_state_array.size() &&
 			particle_size != pos_array.size() &&
 			particle_size != vel_array.size() &&
 			particle_size != force_array.size()
@@ -135,24 +151,27 @@ bool SIM_JETParticleData::UpdateToGeometrySheet(SIM_Object *obj, UT_WorkBuffer &
 	for (int pt_idx = 0; pt_idx < particle_size; ++pt_idx)
 	{
 		GA_Offset particle_offset = offset_map_array.at(pt_idx);
-		bool index_is_new = index_is_new_array.at(pt_idx);
-		auto pos = pos_array.at(pt_idx);
-		auto vel = vel_array.at(pt_idx);
-		auto force = force_array.at(pt_idx);
+		const bool particle_state = particle_state_array.at(pt_idx);
+		const auto pos = pos_array.at(pt_idx);
+		const auto vel = vel_array.at(pt_idx);
+		const auto force = force_array.at(pt_idx);
 
-		if (index_is_new)
+		if (particle_state == PARTICLE_ADDED)
 		{
 			// create a new particle, and update the previous particle_offset
 			particle_offset = gdp.appendPoint();
-			index_is_new_array.at(pt_idx) = false;
+			offset_map_array.at(pt_idx) = particle_offset;
+			particle_state_array.at(pt_idx) = PARTICLE_CLEAN;
 		}
 
 		pos_handle.set(particle_offset, UT_Vector3D{pos.x, pos.y, pos.z});
 		vel_handle.set(particle_offset, UT_Vector3D{vel.x, vel.y, vel.z});
 		force_handle.set(particle_offset, UT_Vector3D{force.x, force.y, force.z});
 		mass_handle.set(particle_offset, mass);
-		jet_idx_handle.set(particle_offset, pt_idx);
+		jet_idx_handle.set(particle_offset, pt_idx); // mapping [GDP Particle] to [Jet Particle]
 	}
+
+	// TODO: Currently, we don't consider particles that is [DELETED] by [JET Solver]
 
 	return true;
 }
@@ -177,11 +196,23 @@ bool SIM_JETParticleData::UpdateFromGeometrySheet(SIM_Object *obj, UT_WorkBuffer
 	GU_Detail &gdp = lock.getGdp();
 
 	// for built-in type, we'd better follow the existing attribute name
-	GA_RWHandleV3 pos_handle = gdp.getP();
-	GA_RWHandleV3 vel_handle = gdp.findPointAttribute(gdp.getStdAttributeName(GEO_ATTRIBUTE_VELOCITY));
-	GA_RWHandleV3 force_handle = gdp.findPointAttribute(gdp.getStdAttributeName(GEO_ATTRIBUTE_MASS));
-	GA_RWHandleF mass_handle = gdp.findPointAttribute(gdp.getStdAttributeName(GEO_ATTRIBUTE_MASS));
-	GA_RWHandleI jet_idx_handle = gdp.findPointAttribute(JetIndexAttributeName);
+	GA_ROHandleV3 pos_handle = gdp.getP();
+	GA_ROHandleV3 vel_handle = gdp.findPointAttribute(gdp.getStdAttributeName(GEO_ATTRIBUTE_VELOCITY));
+	GA_ROHandleV3 force_handle = gdp.findPointAttribute(gdp.getStdAttributeName(GEO_ATTRIBUTE_MASS));
+	GA_ROHandleF mass_handle = gdp.findPointAttribute(gdp.getStdAttributeName(GEO_ATTRIBUTE_MASS));
+	GA_ROHandleI jet_idx_handle = gdp.findPointAttribute(JetIndexAttributeName);
+
+	// If particles is added/deleted inside Houdini Software, we need to consider the default value that GDP will assign
+	// to. We may easily get that, if a new particle is created, the [JetIndexAttribute] would be [0], so it means that
+	// [0] represents this particle is new added
+
+	auto particle_size = jet::ParticleSystemData3::numberOfParticles();
+	auto offset_map_array = jet::ParticleSystemData3::scalarDataAt(scalar_index_geo_offset);
+	auto index_is_new_array = jet::ParticleSystemData3::scalarDataAt(scalar_index_is_new); // we dont need this
+	auto pos_array = jet::ParticleSystemData3::positions();
+	auto vel_array = jet::ParticleSystemData3::velocities();
+	auto force_array = jet::ParticleSystemData3::forces();
+	auto mass = jet::ParticleSystemData3::mass();
 
 	return true;
 }
