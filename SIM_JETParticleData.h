@@ -30,7 +30,7 @@ DECLARE_STANDARD_GETCASTTOTYPE();
 DECLARE_DATAFACTORY(SIM_JETParticleData, SIM_Data, "JET Particle Data", GetDescription());
 
 public:
-	void AddJETParticle(const UT_Vector3 &new_position, const UT_Vector3 &new_velocity = UT_Vector3(0.), const UT_Vector3 &new_force = UT_Vector3(0.));
+	size_t AddJETParticle(GA_Offset IN_offset, const UT_Vector3 &new_position, const UT_Vector3 &new_velocity = UT_Vector3(0.), const UT_Vector3 &new_force = UT_Vector3(0.));
 
 	bool UpdateToGeometrySheet(SIM_Object *obj, UT_WorkBuffer &error_msg);
 	bool UpdateFromGeometrySheet(SIM_Object *obj, UT_WorkBuffer &error_msg);
