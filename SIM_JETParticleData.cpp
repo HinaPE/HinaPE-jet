@@ -20,7 +20,7 @@
 size_t SIM_JETParticleData::scalar_index_geo_offset = -1;
 size_t SIM_JETParticleData::scalar_index_particle_state = -1;
 
-UT_StringHolder JetIndexAttributeName("JetIdx");
+UT_StringHolder JetIndexMapAttributeName("JetIdxMap");
 UT_StringHolder JetParticleDataStateAttributeName("State");
 
 const char *SIM_JETParticleData::DATANAME = "JetParticleData";
@@ -126,7 +126,8 @@ bool SIM_JETParticleData::UpdateToGeometrySheet(SIM_Object *obj, UT_WorkBuffer &
 	GA_RWHandleV3 vel_handle = gdp.findPointAttribute(gdp.getStdAttributeName(GEO_ATTRIBUTE_VELOCITY));
 	GA_RWHandleV3 force_handle = gdp.findPointAttribute(gdp.getStdAttributeName(GEO_ATTRIBUTE_MASS));
 	GA_RWHandleF mass_handle = gdp.findPointAttribute(gdp.getStdAttributeName(GEO_ATTRIBUTE_MASS));
-	GA_RWHandleI jet_idx_handle = gdp.findPointAttribute(JetIndexAttributeName);
+	GA_RWHandleI jet_idx_map_handle = gdp.findPointAttribute(JetIndexMapAttributeName);
+	GA_RWHandleI data_state_handle = gdp.findPointAttribute(JetParticleDataStateAttributeName);
 
 	const auto particle_size = jet::ParticleSystemData3::numberOfParticles();
 	auto offset_map_array = jet::ParticleSystemData3::scalarDataAt(scalar_index_geo_offset);
@@ -148,6 +149,15 @@ bool SIM_JETParticleData::UpdateToGeometrySheet(SIM_Object *obj, UT_WorkBuffer &
 		return false;
 	}
 
+	{
+		// mark geo data dirty to find all deleted particles
+		GA_Offset pt_off;
+		GA_FOR_ALL_PTOFF(&gdp, pt_off)
+			{
+				data_state_handle.set(pt_off, PARTICLE_DIRTY);
+			}
+	}
+
 	for (int pt_idx = 0; pt_idx < particle_size; ++pt_idx)
 	{
 		GA_Offset particle_offset = offset_map_array.at(pt_idx);
@@ -163,15 +173,25 @@ bool SIM_JETParticleData::UpdateToGeometrySheet(SIM_Object *obj, UT_WorkBuffer &
 			offset_map_array.at(pt_idx) = particle_offset;
 			particle_state_array.at(pt_idx) = PARTICLE_CLEAN;
 		}
+		jet_idx_map_handle.set(particle_offset, pt_idx); // mapping [GDP Particle] to [Jet Particle]
 
 		pos_handle.set(particle_offset, UT_Vector3D{pos.x, pos.y, pos.z});
 		vel_handle.set(particle_offset, UT_Vector3D{vel.x, vel.y, vel.z});
 		force_handle.set(particle_offset, UT_Vector3D{force.x, force.y, force.z});
 		mass_handle.set(particle_offset, mass);
-		jet_idx_handle.set(particle_offset, pt_idx); // mapping [GDP Particle] to [Jet Particle]
+		data_state_handle.set(particle_offset, PARTICLE_CLEAN);
 	}
 
-	// TODO: Currently, we don't consider particles that is [DELETED] by [JET Solver]
+	{
+		// delete all unrelated data
+		GA_Offset pt_off;
+		GA_FOR_ALL_PTOFF(&gdp, pt_off)
+			{
+				ParticleState state = (ParticleState) data_state_handle.get(pt_off);
+				if (state == PARTICLE_DIRTY) // it means this particle is not updated
+					gdp.destroyPointOffset(pt_off);
+			}
+	}
 
 	return true;
 }
