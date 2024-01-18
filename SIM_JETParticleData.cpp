@@ -17,11 +17,15 @@
 
 #include "jet/jet.h"
 
+size_t SIM_JETParticleData::scalar_index_geo_offset = -1;
+size_t SIM_JETParticleData::scalar_index_density = -1;
+size_t SIM_JETParticleData::scalar_index_pressure = -1;
+
 UT_StringHolder JetIndexAttributeName("JetIdx");
 UT_StringHolder DensityAttributeName("Dens");
 UT_StringHolder PressureAttributeName("Pres");
 
-const char * SIM_JETParticleData::DATANAME = "JetParticleData";
+const char *SIM_JETParticleData::DATANAME = "JetParticleData";
 
 const SIM_DopDescription *SIM_JETParticleData::GetDescription()
 {
@@ -72,6 +76,10 @@ void SIM_JETParticleData::initializeSubclass()
 	setTargetDensity(target_density);
 	setTargetSpacing(target_spacing);
 	setRelativeKernelRadius(relative_kernel_radius);
+
+	scalar_index_geo_offset = jet::ParticleSystemData3::addScalarData(); // Mapping Jet Particle Index and HDK gdp
+	scalar_index_density = jet::ParticleSystemData3::addScalarData(); //
+	scalar_index_pressure = jet::ParticleSystemData3::addScalarData(); //
 }
 
 void SIM_JETParticleData::makeEqualSubclass(const SIM_Data *source)
@@ -90,12 +98,27 @@ bool SIM_JETParticleData::UpdateToGeometrySheet(SIM_Object *obj, UT_WorkBuffer &
 		return false;
 	}
 
-	auto pos_array = jet::ParticleSystemData3::positions();
-	auto pos_array_size = pos_array.size();
-	for (int pos_idx = 0; pos_idx < pos_array_size; ++pos_idx)
+	SIM_GeometryCopy *geo = SIM_DATA_GET(*obj, SIM_GEOMETRY_DATANAME, SIM_GeometryCopy); // we need write access
+	SIM_GeometryAutoWriteLock lock(geo);
+	lock.getGdp();
+
+	auto particle_size = jet::ParticleSystemData3::numberOfParticles();
+
+	for (int pos_idx = 0; pos_idx < particle_size; ++pos_idx)
 	{
-		auto map_index = jet::ParticleSystemData3::addScalarData();
+		// async positions
+		auto pos_array = jet::ParticleSystemData3::positions();
+		auto pos_array_size = pos_array.size();
+
+		if (particle_size != pos_array_size)
+		{
+			error_msg.appendSprintf("particle_size != pos_array_size, From %s\n", DATANAME);
+			return false;
+		}
+
+		GA_Offset particle_offset = jet::ParticleSystemData3::scalarDataAt(scalar_index_geo_offset).at(pos_idx);
 	}
+
 
 	return true;
 }
@@ -107,7 +130,6 @@ bool SIM_JETParticleData::UpdateFromGeometrySheet(SIM_Object *obj, UT_WorkBuffer
 		error_msg.appendSprintf("Object Is Null, From %s\n", DATANAME);
 		return false;
 	}
-
 
 	return true;
 }
