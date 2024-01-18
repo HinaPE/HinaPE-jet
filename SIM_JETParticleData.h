@@ -6,7 +6,7 @@
 #include <SIM/SIM_DopDescription.h>
 #include <SIM/SIM_Utils.h>
 
-#include "UT/UT_WorkBuffer.h"
+#include <UT/UT_WorkBuffer.h>
 
 #include "jet/jet.h"
 
@@ -26,10 +26,10 @@ DECLARE_STANDARD_GETCASTTOTYPE();
 DECLARE_DATAFACTORY(SIM_JETParticleData, SIM_Data, "JET Particle Data", GetDescription());
 
 public:
-	size_t AddJETParticle(GA_Offset IN_offset, const UT_Vector3 &new_position, const UT_Vector3 &new_velocity = UT_Vector3(0.), const UT_Vector3 &new_force = UT_Vector3(0.));
+	virtual size_t AddJETParticle(GA_Offset IN_offset, const UT_Vector3 &new_position, const UT_Vector3 &new_velocity = UT_Vector3(0.), const UT_Vector3 &new_force = UT_Vector3(0.));
 
-	bool UpdateToGeometrySheet(SIM_Object *obj, UT_WorkBuffer &error_msg);
-	bool UpdateFromGeometrySheet(SIM_Object *obj, UT_WorkBuffer &error_msg);
+	virtual bool UpdateToGeometrySheet(SIM_Object *obj, UT_WorkBuffer &error_msg);
+	virtual bool UpdateFromGeometrySheet(SIM_Object *obj, UT_WorkBuffer &error_msg);
 	static size_t scalar_index_geo_offset;
 	static size_t scalar_index_particle_state; // added/dirty/deleted... etc.
 	bool dirty = false;

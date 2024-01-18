@@ -20,8 +20,6 @@ add_library(
         SHARED
         Entrance.cpp
 
-        SIM_JETParticleData.cpp
-        SIM_JETParticleData.h
 #        SIM_JETEmitterSource.cpp
 #        SIM_JETEmitterSource.h
 #        SIM_JETCollider.cpp
@@ -35,8 +33,13 @@ add_library(
 #        GAS_JETSyncData.h
 
 #        hdk_interface/util_geometry.h
-        utils_jet.cpp
-        utils_jet.h
+#        utils_jet.cpp
+#        utils_jet.h
+
+        SIM_JETParticleData.cpp
+        SIM_JETParticleData.h
+        GAS_TESTAddARandomParticleSolver.cpp
+        GAS_TESTAddARandomParticleSolver.h
 )
 
 # Link Houdini Toolkit

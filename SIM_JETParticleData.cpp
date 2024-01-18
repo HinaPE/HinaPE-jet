@@ -46,6 +46,7 @@ void SIM_JETParticleData::initializeSubclass()
 
 	scalar_index_geo_offset = jet::ParticleSystemData3::addScalarData(); // Mapping Jet Particle Index and HDK gdp
 	scalar_index_particle_state = jet::ParticleSystemData3::addScalarData(PARTICLE_ADDED); // ParticleState
+	dirty = false;
 }
 
 void SIM_JETParticleData::makeEqualSubclass(const SIM_Data *source)
