@@ -110,7 +110,7 @@ bool SIM_JETParticleData::UpdateToGeometrySheet(SIM_Object *obj, UT_WorkBuffer &
 	GA_RWHandleV3 vel_handle = gdp.findPointAttribute(gdp.getStdAttributeName(GEO_ATTRIBUTE_VELOCITY));
 	GA_RWHandleV3 force_handle = gdp.findPointAttribute(gdp.getStdAttributeName(GEO_ATTRIBUTE_MASS));
 	GA_RWHandleF mass_handle = gdp.findPointAttribute(gdp.getStdAttributeName(GEO_ATTRIBUTE_MASS));
-	GA_RWHandleI jet_idx_handleRO = gdp.findPointAttribute(JetIndexAttributeName);
+	GA_RWHandleI jet_idx_handle = gdp.findPointAttribute(JetIndexAttributeName);
 
 	auto particle_size = jet::ParticleSystemData3::numberOfParticles();
 	auto offset_map_array = jet::ParticleSystemData3::scalarDataAt(scalar_index_geo_offset);
@@ -122,6 +122,7 @@ bool SIM_JETParticleData::UpdateToGeometrySheet(SIM_Object *obj, UT_WorkBuffer &
 
 	if (
 			particle_size != offset_map_array.size() &&
+			particle_size != index_is_new_array.size() &&
 			particle_size != pos_array.size() &&
 			particle_size != vel_array.size() &&
 			particle_size != force_array.size()
@@ -150,6 +151,7 @@ bool SIM_JETParticleData::UpdateToGeometrySheet(SIM_Object *obj, UT_WorkBuffer &
 		vel_handle.set(particle_offset, UT_Vector3D{vel.x, vel.y, vel.z});
 		force_handle.set(particle_offset, UT_Vector3D{force.x, force.y, force.z});
 		mass_handle.set(particle_offset, mass);
+		jet_idx_handle.set(particle_offset, pt_idx);
 	}
 
 	return true;
