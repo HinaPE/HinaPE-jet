@@ -18,12 +18,9 @@
 #include "jet/jet.h"
 
 size_t SIM_JETParticleData::scalar_index_geo_offset = -1;
-size_t SIM_JETParticleData::scalar_index_density = -1;
-size_t SIM_JETParticleData::scalar_index_pressure = -1;
+size_t SIM_JETParticleData::scalar_index_is_new = -1;
 
 UT_StringHolder JetIndexAttributeName("JetIdx");
-UT_StringHolder DensityAttributeName("Dens");
-UT_StringHolder PressureAttributeName("Pres");
 
 const char *SIM_JETParticleData::DATANAME = "JetParticleData";
 
@@ -78,8 +75,7 @@ void SIM_JETParticleData::initializeSubclass()
 	setRelativeKernelRadius(relative_kernel_radius);
 
 	scalar_index_geo_offset = jet::ParticleSystemData3::addScalarData(); // Mapping Jet Particle Index and HDK gdp
-	scalar_index_density = jet::ParticleSystemData3::addScalarData(); //
-	scalar_index_pressure = jet::ParticleSystemData3::addScalarData(); //
+	scalar_index_is_new = jet::ParticleSystemData3::addScalarData(true); // is_new flag: 1 for new, 0 for old
 }
 
 void SIM_JETParticleData::makeEqualSubclass(const SIM_Data *source)
@@ -99,26 +95,62 @@ bool SIM_JETParticleData::UpdateToGeometrySheet(SIM_Object *obj, UT_WorkBuffer &
 	}
 
 	SIM_GeometryCopy *geo = SIM_DATA_GET(*obj, SIM_GEOMETRY_DATANAME, SIM_GeometryCopy); // we need write access
-	SIM_GeometryAutoWriteLock lock(geo);
-	lock.getGdp();
 
-	auto particle_size = jet::ParticleSystemData3::numberOfParticles();
-
-	for (int pos_idx = 0; pos_idx < particle_size; ++pos_idx)
+	if (!geo)
 	{
-		// async positions
-		auto pos_array = jet::ParticleSystemData3::positions();
-		auto pos_array_size = pos_array.size();
-
-		if (particle_size != pos_array_size)
-		{
-			error_msg.appendSprintf("particle_size != pos_array_size, From %s\n", DATANAME);
-			return false;
-		}
-
-		GA_Offset particle_offset = jet::ParticleSystemData3::scalarDataAt(scalar_index_geo_offset).at(pos_idx);
+		error_msg.appendSprintf("Geometry Is Null, From %s\n", DATANAME);
+		return false;
 	}
 
+	SIM_GeometryAutoWriteLock lock(geo);
+	GU_Detail &gdp = lock.getGdp();
+
+	// for built-in type, we'd better follow the existing attribute name
+	GA_RWHandleV3 pos_handle = gdp.getP();
+	GA_RWHandleV3 vel_handle = gdp.findPointAttribute(gdp.getStdAttributeName(GEO_ATTRIBUTE_VELOCITY));
+	GA_RWHandleV3 force_handle = gdp.findPointAttribute(gdp.getStdAttributeName(GEO_ATTRIBUTE_MASS));
+	GA_RWHandleF mass_handle = gdp.findPointAttribute(gdp.getStdAttributeName(GEO_ATTRIBUTE_MASS));
+	GA_RWHandleI jet_idx_handleRO = gdp.findPointAttribute(JetIndexAttributeName);
+
+	auto particle_size = jet::ParticleSystemData3::numberOfParticles();
+	auto offset_map_array = jet::ParticleSystemData3::scalarDataAt(scalar_index_geo_offset);
+	auto index_is_new_array = jet::ParticleSystemData3::scalarDataAt(scalar_index_is_new);
+	auto pos_array = jet::ParticleSystemData3::positions();
+	auto vel_array = jet::ParticleSystemData3::velocities();
+	auto force_array = jet::ParticleSystemData3::forces();
+	auto mass = jet::ParticleSystemData3::mass();
+
+	if (
+			particle_size != offset_map_array.size() &&
+			particle_size != pos_array.size() &&
+			particle_size != vel_array.size() &&
+			particle_size != force_array.size()
+			)
+	{
+		error_msg.appendSprintf("Size Error, From %s\n", DATANAME);
+		return false;
+	}
+
+	for (int pt_idx = 0; pt_idx < particle_size; ++pt_idx)
+	{
+		GA_Offset particle_offset = offset_map_array.at(pt_idx);
+		bool index_is_new = index_is_new_array.at(pt_idx);
+		auto pos = pos_array.at(pt_idx);
+		auto vel = vel_array.at(pt_idx);
+		auto force = force_array.at(pt_idx);
+
+		if (index_is_new)
+		{
+			// create a new particle, and update the previous particle_offset
+			particle_offset = gdp.appendPoint();
+			index_is_new_array.at(pt_idx) = false;
+		}
+
+		pos_handle.set(particle_offset, UT_Vector3D{pos.x, pos.y, pos.z});
+		vel_handle.set(particle_offset, UT_Vector3D{vel.x, vel.y, vel.z});
+		force_handle.set(particle_offset, UT_Vector3D{force.x, force.y, force.z});
+		mass_handle.set(particle_offset, mass);
+	}
 
 	return true;
 }
@@ -130,6 +162,24 @@ bool SIM_JETParticleData::UpdateFromGeometrySheet(SIM_Object *obj, UT_WorkBuffer
 		error_msg.appendSprintf("Object Is Null, From %s\n", DATANAME);
 		return false;
 	}
+
+	SIM_GeometryCopy *geo = SIM_DATA_GET(*obj, SIM_GEOMETRY_DATANAME, SIM_GeometryCopy); // we need write access
+
+	if (!geo)
+	{
+		error_msg.appendSprintf("Geometry Is Null, From %s\n", DATANAME);
+		return false;
+	}
+
+	SIM_GeometryAutoWriteLock lock(geo);
+	GU_Detail &gdp = lock.getGdp();
+
+	// for built-in type, we'd better follow the existing attribute name
+	GA_RWHandleV3 pos_handle = gdp.getP();
+	GA_RWHandleV3 vel_handle = gdp.findPointAttribute(gdp.getStdAttributeName(GEO_ATTRIBUTE_VELOCITY));
+	GA_RWHandleV3 force_handle = gdp.findPointAttribute(gdp.getStdAttributeName(GEO_ATTRIBUTE_MASS));
+	GA_RWHandleF mass_handle = gdp.findPointAttribute(gdp.getStdAttributeName(GEO_ATTRIBUTE_MASS));
+	GA_RWHandleI jet_idx_handle = gdp.findPointAttribute(JetIndexAttributeName);
 
 	return true;
 }

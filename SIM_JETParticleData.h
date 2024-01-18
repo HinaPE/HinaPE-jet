@@ -33,8 +33,7 @@ public:
  	bool UpdateToGeometrySheet(SIM_Object *obj, UT_WorkBuffer &error_msg);
 	bool UpdateFromGeometrySheet(SIM_Object *obj, UT_WorkBuffer &error_msg);
 	static size_t scalar_index_geo_offset;
-	static size_t scalar_index_density;
-	static size_t scalar_index_pressure;
+	static size_t scalar_index_is_new;
 };
 
 #endif //HINAPE_JET_SIM_JETPARTICLEDATA_H
