@@ -75,6 +75,8 @@ size_t SIM_JETParticleData::AddJETParticle(GA_Offset IN_offset, const UT_Vector3
 	particle_state_array.at(new_particle_index) = PARTICLE_ADDED;
 
 	dirty = true;
+
+	return new_particle_index;
 }
 
 bool SIM_JETParticleData::UpdateToGeometrySheet(SIM_Object *obj, UT_WorkBuffer &error_msg)
